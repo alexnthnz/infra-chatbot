@@ -6,11 +6,13 @@ on:
       - main
     paths:
       - 'chatbot/agent/**'
+      - '.github/workflows/agent.yml'
   pull_request:
     branches:
       - main
     paths:
       - 'chatbot/agent/**'
+      - '.github/workflows/agent.yml'
 
 jobs:
   build-and-test:
