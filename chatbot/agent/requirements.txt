@@ -5,3 +5,4 @@ torch
 pydantic-settings
 huggingface_hub[hf_xet]
 hf_xet
+httpx
