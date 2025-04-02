@@ -1,0 +1,46 @@
+name: Agent Model
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'chatbot/agent/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'chatbot/agent/**'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Set up Python
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.13
+
+      - name: Install Python dependencies
+        working-directory: chatbot/agent
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests with pytest
+        working-directory: chatbot/agent
+        run: |
+          pip install pytest
+          pytest
+
+      - name: Build Docker image for Agent Model
+        working-directory: chatbot/agent
+        run: |
+          docker build -t my-agent-model .
+

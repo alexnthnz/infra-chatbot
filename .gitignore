@@ -1,0 +1,15 @@
+.DS_Store
+
+/bazel-*
+
+deploy/infra/env/*/.terraform
+deploy/infra/env/*/*.tfstate
+deploy/infra/env/*/*.tfstate.*
+deploy/infra/env/*/crash.log
+deploy/infra/env/*/terraform.tfvars
+
+deploy/state/.terraform/*
+deploy/state/*.tfstate
+deploy/state/*.tfstate.*
+deploy/state/crash.log
+deploy/state/terraform.tfvars

@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+transformers
+torch
+pydantic-settings
+huggingface_hub[hf_xet]
+hf_xet
