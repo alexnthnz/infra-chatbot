@@ -1,7 +1,6 @@
-fastapi
-uvicorn[standard]
-transformers
-torch --index-url https://download.pytorch.org/whl/cpu
-pydantic-settings
-hf_xet
-httpx
+fastapi==0.115.12
+uvicorn[standard]==0.34.0
+transformers==4.50.3
+torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+pydantic-settings==2.8.1
+httpx==0.28.1
