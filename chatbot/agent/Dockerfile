@@ -1,18 +1,26 @@
-# Use a lightweight official Python image.
-FROM python:3.9-slim
+# Stage 1: Build environment
+FROM python:3.13-slim AS build-env
 
-# Set the working directory in the container.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential python3-dev && \
+    rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
-
-# Copy the requirements file and install dependencies.
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of your application code into the container.
+RUN pip install --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt \
+    && rm -rf ~/.cache/pip
+
+# Stage 2: Final image
+FROM python:3.13-slim
+
+WORKDIR /app
+COPY --from=build-env /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
+COPY --from=build-env /usr/local/bin /usr/local/bin
+
 COPY . .
 
-# Expose the port the app runs on.
 EXPOSE 8080
 
-# Run the application using Uvicorn.
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080"]

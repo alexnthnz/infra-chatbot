@@ -1,8 +1,7 @@
 fastapi
-uvicorn
+uvicorn[standard]
 transformers
-torch
+torch --index-url https://download.pytorch.org/whl/cpu
 pydantic-settings
-huggingface_hub[hf_xet]
 hf_xet
 httpx
