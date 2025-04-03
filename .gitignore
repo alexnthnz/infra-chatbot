@@ -14,3 +14,8 @@ deploy/state/*.tfstate
 deploy/state/*.tfstate.*
 deploy/state/crash.log
 deploy/state/terraform.tfvars
+
+/venv
+chatbot/*/venv
+chatbot/*/venv/*
+chatbot/**/__pycache__

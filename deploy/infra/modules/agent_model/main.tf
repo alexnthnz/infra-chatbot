@@ -3,8 +3,7 @@ resource "aws_sagemaker_model" "agent_model" {
   execution_role_arn = var.execution_role_arn
 
   primary_container {
-    image             = var.image_uri
-    model_data_url    = var.model_data_url
+    image             = var.ecr_image_uri
   }
 }
 

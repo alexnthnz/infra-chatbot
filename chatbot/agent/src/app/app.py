@@ -1,37 +1,31 @@
-import logging
-import uvicorn
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from transformers import pipeline
-from config.settings import settings
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from src.utils.logger import logger
+from src.config.settings import settings
+from src.utils.utilities import is_question
 
-app = FastAPI(title="Agent Model Inference Service")
+from .inference import analyzer, classifier
 
-# Lazy-load models with error handling
-def get_analyzer():
-    try:
-        return pipeline("sentiment-analysis", model=settings.sentiment_model)
-    except Exception as e:
-        logger.error(f"Failed to load sentiment model: {e}")
-        raise
+app = FastAPI(title=settings.app_name)
 
-def get_classifier():
-    try:
-        return pipeline("zero-shot-classification", model=settings.internet_classifier_model)
-    except Exception as e:
-        logger.error(f"Failed to load classifier model: {e}")
-        raise
+origins = [
+    "*",
+]
 
-analyzer = get_analyzer()
-classifier = get_classifier()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
-# Request model for incoming prompts
+
 class PromptRequest(BaseModel):
     prompt: str
+
 
 # Response model that includes analysis details
 class AnalysisResponse(BaseModel):
@@ -39,14 +33,17 @@ class AnalysisResponse(BaseModel):
     score: float
     label: str
     requires_internet: bool
-    additional_info: str | None = None  # Still included in model, but not populated
 
-# Simple heuristic to detect questions
-def is_question(prompt: str) -> bool:
-    return prompt.strip().endswith("?")
+
+@app.get("/ping")
+async def read_main():
+    return {
+        "message": "Pong"
+    }
+
 
 @app.post("/invocations", response_model=AnalysisResponse)
-async def analyze_prompt(request: PromptRequest):
+async def inference(request: PromptRequest):
     if not request.prompt:
         raise HTTPException(status_code=400, detail="Prompt is empty")
 
@@ -85,5 +82,3 @@ async def analyze_prompt(request: PromptRequest):
         logger.error(f"Error processing prompt: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-if __name__ == "__main__":
-    uvicorn.run(app, host=settings.host, port=settings.port)
