@@ -8,13 +8,8 @@ variable "execution_role_arn" {
   type        = string
 }
 
-variable "image_uri" {
+variable "ecr_image_uri" {
   description = "Container image URI for the agent model."
-  type        = string
-}
-
-variable "model_data_url" {
-  description = "S3 URL for the model artifacts."
   type        = string
 }
 

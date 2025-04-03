@@ -4,8 +4,6 @@ from typing import List
 class Settings(BaseSettings):
     # Application settings
     app_name: str = "Agent Model Inference Service"
-    host: str = "0.0.0.0"
-    port: int = 8080
 
     # Model configuration
     sentiment_model: str = "distilbert-base-uncased-finetuned-sst-2-english"

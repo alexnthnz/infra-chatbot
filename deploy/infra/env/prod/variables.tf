@@ -27,3 +27,27 @@ variable "model_artifacts_bucket_name" {
   type        = string
   default     = "prod-model-artifacts-bucket"
 }
+
+variable "agent_model_name" {
+  description = "Name for the SageMaker agent model."
+  type        = string
+  default     = "prod-agent-model"
+}
+
+variable "agent_ecr_image_uri" {
+  description = "Container image URI for the agent model."
+  type        = string
+  default     = "prod-agent-model-ecr-image-uri"
+}
+
+variable "agent_instance_type" {
+  description = "SageMaker instance type for the agent model."
+  type        = string
+  default     = "ml.t2.medium"
+}
+
+variable "agent_initial_instance_count" {
+  description = "Initial instance count for the agent model."
+  type        = number
+  default     = 1
+}
