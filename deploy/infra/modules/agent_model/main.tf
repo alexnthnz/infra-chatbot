@@ -16,6 +16,10 @@ resource "aws_sagemaker_endpoint_configuration" "agent_endpoint_config" {
     initial_instance_count = var.initial_instance_count
     instance_type         = var.instance_type
   }
+
+  lifecycle {
+    create_before_destroy = true 
+  }
 }
 
 resource "aws_sagemaker_endpoint" "agent_endpoint" {

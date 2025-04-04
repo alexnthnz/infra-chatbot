@@ -72,5 +72,5 @@ def test_invocations_category_classification():
     response = client.post("/invocations", json=payload)
     assert response.status_code == 200
     data = response.json()
-    assert data["category"]["category"] == "imperative"
+    assert data["category"]["category"] == "interrogative"
     assert 0 <= data["category"]["score"] <= 1
