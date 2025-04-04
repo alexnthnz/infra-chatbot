@@ -68,23 +68,6 @@ jobs:
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
           echo "IMAGE_URI=$REGISTRY/$REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
 
-      - name: Setup Terraform Variables
-        working-directory: deploy/infra/env/prod
-        env:
-          IMAGE_URI: ${{ env.IMAGE_URI }}
-        run: |
-          cat <<EOF > terraform.tfvars
-          aws_region = "${{ secrets.AWS_REGION }}"
-          environment = "${{ secrets.ENVIRONMENT }}"
-          agent_model_role_name = "${{ secrets.AGENT_MODEL_ROLE_ARN }}"
-          foundation_model_role_name = "${{ secrets.FOUNDATION_MODEL_ROLE_ARN }}"
-          model_artifacts_bucket_name = "${{ secrets.MODEL_ARTIFACTS_BUCKET_NAME }}"
-          agent_model_name = "${{ secrets.AGENT_MODEL_NAME }}"
-          agent_ecr_image_uri = "${{ env.IMAGE_URI }}"
-          agent_instance_type = "${{ secrets.AGENT_INSTANCE_TYPE }}"
-          agent_initial_instance_count = "${{ secrets.AGENT_INITIAL_INSTANCE_COUNT }}"
-          EOF
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -103,6 +86,23 @@ jobs:
         working-directory: deploy/infra/env/prod
         id: validate
         run: terraform validate
+
+      - name: Setup Terraform Variables
+        working-directory: deploy/infra/env/prod
+        env:
+          IMAGE_URI: ${{ env.IMAGE_URI }}
+        run: |
+          cat <<EOF > terraform.tfvars
+          aws_region = "${{ secrets.AWS_REGION }}"
+          environment = "${{ secrets.ENVIRONMENT }}"
+          agent_model_role_name = "${{ secrets.AGENT_MODEL_ROLE_ARN }}"
+          foundation_model_role_name = "${{ secrets.FOUNDATION_MODEL_ROLE_ARN }}"
+          model_artifacts_bucket_name = "${{ secrets.MODEL_ARTIFACTS_BUCKET_NAME }}"
+          agent_model_name = "${{ secrets.AGENT_MODEL_NAME }}"
+          agent_ecr_image_uri = "${{ env.IMAGE_URI }}"
+          agent_instance_type = "${{ secrets.AGENT_INSTANCE_TYPE }}"
+          agent_initial_instance_count = "${{ secrets.AGENT_INITIAL_INSTANCE_COUNT }}"
+          EOF
 
       - name: Terraform Plan
         id: plan
