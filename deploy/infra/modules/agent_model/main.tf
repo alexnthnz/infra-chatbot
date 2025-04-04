@@ -1,5 +1,5 @@
 resource "aws_sagemaker_model" "agent_model" {
-  name               = var.model_name
+  name               = "${var.model_name}-${formatdate("YYYYMMDDHHmmss", timestamp())}"
   execution_role_arn = var.execution_role_arn
 
   primary_container {
