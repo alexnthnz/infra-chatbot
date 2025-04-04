@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     sentiment_model: str = "distilbert-base-uncased-finetuned-sst-2-english"
     internet_classifier_model: str = "facebook/bart-large-mnli"
     candidate_labels: List[str] = ["requires internet access", "does not require internet access"]
+    prompt_categories: List[str] = ["declarative", "interrogative", "imperative", "exclamatory", "conversational"]
 
     class Config:
         # Load variables from a .env file if present
