@@ -33,18 +33,6 @@ jobs:
         with:
           python-version: 3.13
 
-      # Configure AWS Credentials
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
       - name: Install Python dependencies
         working-directory: chatbot/agent
         run: |
@@ -56,6 +44,29 @@ jobs:
         run: |
           pip install pytest
           pytest
+
+  build-push-deploy:
+    needs: build-and-test  # This job depends on the build-and-test job
+    if: ${{ github.event.pull_request.merged == true }}
+    runs-on: ubuntu-latest
+    environment: prod
+
+    steps:
+      # Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Configure AWS Credentials
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build Docker image for Agent Model
         working-directory: chatbot/agent
@@ -81,7 +92,7 @@ jobs:
         working-directory: deploy/infra
         id: fmt
         run: terraform fmt -check -recursive
-    
+
       - name: Terraform validate
         working-directory: deploy/infra/env/prod
         id: validate
@@ -109,25 +120,6 @@ jobs:
         working-directory: deploy/infra/env/prod
         run: terraform plan -input=false -var-file=terraform.tfvars
 
-      - uses: actions/github-script@v6
-        env:
-          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
-        with:
-          script: |
-            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
-            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
- 
-            <details><summary>Show Plan</summary>
- 
-            \`\`\`\n
-            ${process.env.PLAN}
-            \`\`\`
- 
-            </details>
-            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
- 
       - name: Terraform Plan Status
         if: steps.plan.outcome == 'failure'
         run: exit 1
@@ -135,4 +127,4 @@ jobs:
       - name: Terraform Apply
         working-directory: deploy/infra/env/prod
         run: |
-          terraform apply -auto-approve -input=false -var-file=terraform.tfvars 
+          terraform apply -auto-approve -input=false -var-file=terraform.tfvars
