@@ -11,7 +11,7 @@ resource "aws_sagemaker_endpoint_configuration" "agent_endpoint_config" {
   name = "${var.model_name}-config"
 
   production_variants {
-    variant_name          = "AllTraffic"
+    variant_name          = "default"
     model_name            = aws_sagemaker_model.agent_model.name
     initial_instance_count = var.initial_instance_count
     instance_type         = var.instance_type

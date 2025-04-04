@@ -19,7 +19,7 @@ import subprocess
 import sys
 from uvicorn.workers import UvicornWorker
 
-cpu_count = 1
+cpu_count = os.cpu_count() or 1
 
 model_server_timeout = 3600
 model_server_workers = int(cpu_count)
