@@ -87,15 +87,17 @@ jobs:
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.11.3
 
       - name: Terraform Init
         working-directory: deploy/infra/env/prod
         run: terraform init
 
       - name: Terraform format
-        working-directory: deploy/infra/env/prod
+        working-directory: deploy/infra
         id: fmt
-        run: terraform fmt -check
+        run: terraform fmt -check -recursive
     
       - name: Terraform validate
         working-directory: deploy/infra/env/prod

@@ -6,8 +6,8 @@ terraform {
     }
   }
 
-  backend s3 {
-    bucket         = "infra-chatbot-remote-state" 
+  backend "s3" {
+    bucket         = "infra-chatbot-remote-state"
     key            = "app/terraform.tfstate"
     dynamodb_table = "infra-chatbot-remote-state"
     region         = "ap-southeast-2"
