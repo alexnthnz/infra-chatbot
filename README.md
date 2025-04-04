@@ -1,6 +1,6 @@
 # RAG-FineTuning-Pipeline
 
-![Pipeline Architecture](path/to/architecture-diagram.png)
+![Pipeline Architecture](./assets/image.png)
 
 A machine learning pipeline that integrates a LangChain Agent with a Retrieval-Augmented Generation (RAG) system and a Foundation Model, enabling query processing, data retrieval, and model fine-tuning based on user feedback and new data.
 
