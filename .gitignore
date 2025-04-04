@@ -19,3 +19,5 @@ deploy/state/terraform.tfvars
 chatbot/*/venv
 chatbot/*/venv/*
 chatbot/**/__pycache__
+
+MODULE.bazel.lock

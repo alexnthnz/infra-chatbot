@@ -13,6 +13,11 @@ variable "model_artifacts_bucket_name" {
   type        = string
 }
 
+variable "aws_region" {
+  description = "AWS region where the resources will be created."
+  type        = string
+}
+
 # If you want to pass in the bucket ARN for IAM policy reference,
 # you can either compute it from the S3 bucket resource (in s3.tf)
 # or declare it as a variable.
