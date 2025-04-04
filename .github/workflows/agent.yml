@@ -68,7 +68,24 @@ jobs:
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
           echo "IMAGE_URI=$REGISTRY/$REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
 
-      - name: Install Terraform
+      - name: Setup Terraform Variables
+        working-directory: deploy/infra/env/prod
+        env:
+          IMAGE_URI: ${{ env.IMAGE_URI }}
+        run: |
+          cat <<EOF > terraform.tfvars
+          aws_region = "${{ secrets.AWS_REGION }}"
+          environment = "${{ secrets.ENVIRONMENT }}"
+          agent_model_role_name = "${{ secrets.AGENT_MODEL_ROLE_ARN }}"
+          foundation_model_role_name = "${{ secrets.FOUNDATION_MODEL_ROLE_ARN }}"
+          model_artifacts_bucket_name = "${{ secrets.MODEL_ARTIFACTS_BUCKET_NAME }}"
+          agent_model_name = "${{ secrets.AGENT_MODEL_NAME }}"
+          agent_ecr_image_uri = "${{ env.IMAGE_URI }}"
+          agent_instance_type = "${{ secrets.AGENT_INSTANCE_TYPE }}"
+          agent_initial_instance_count = "${{ secrets.AGENT_INITIAL_INSTANCE_COUNT }}"
+          EOF
+
+      - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
@@ -76,27 +93,19 @@ jobs:
         run: terraform init
 
       - name: Terraform format
+        working-directory: deploy/infra/env/prod
         id: fmt
         run: terraform fmt -check
     
       - name: Terraform validate
+        working-directory: deploy/infra/env/prod
         id: validate
         run: terraform validate
 
       - name: Terraform Plan
         id: plan
         working-directory: deploy/infra/env/prod
-        run: terraform plan \
-          -input=false \
-          -var="aws_region=${{ secrets.AWS_REGION }}" \
-          -var="environment=${{ secrets.ENVIRONMENT }}" \
-          -var="agent_model_role_name=${{ secrets.AGENT_MODEL_ROLE_ARN }}" \
-          -var="foundation_model_role_name=${{ secrets.FOUNDATION_MODEL_ROLE_ARN }}" \
-          -var="model_artifacts_bucket_name=${{ secrets.MODEL_ARTIFACTS_BUCKET_NAME }}" \
-          -var="agent_model_name=${{ secrets.AGENT_MODEL_NAME }}" \
-          -var="agent_ecr_image_uri=${{ env.IMAGE_URI }}" \
-          -var="agent_instance_type=${{ secrets.AGENT_INSTANCE_TYPE }}" \
-          -var="agent_initial_instance_count=${{ secrets.AGENT_INITIAL_INSTANCE_COUNT }}"
+        run: terraform plan -input=false -var-file=terraform.tfvars
 
       - uses: actions/github-script@v6
         if: github.event_name == 'pull_request'
@@ -125,14 +134,4 @@ jobs:
       - name: Terraform Apply
         working-directory: deploy/infra/env/prod
         run: |
-          terraform apply -auto-approve \
-            -input=false \
-            -var="aws_region=${{ secrets.AWS_REGION }}" \
-            -var="environment=${{ secrets.ENVIRONMENT }}" \
-            -var="agent_model_role_name=${{ secrets.AGENT_MODEL_ROLE_ARN }}" \
-            -var="foundation_model_role_name=${{ secrets.FOUNDATION_MODEL_ROLE_ARN }}" \
-            -var="model_artifacts_bucket_name=${{ secrets.MODEL_ARTIFACTS_BUCKET_NAME }}" \
-            -var="agent_model_name=${{ secrets.AGENT_MODEL_NAME }}" \
-            -var="agent_ecr_image_uri=${{ env.IMAGE_URI }}" \
-            -var="agent_instance_type=${{ secrets.AGENT_INSTANCE_TYPE }}" \
-            -var="agent_initial_instance_count=${{ secrets.AGENT_INITIAL_INSTANCE_COUNT }}"
+          terraform apply -auto-approve -input=false -var-file=terraform.tfvars 
