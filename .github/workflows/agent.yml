@@ -110,7 +110,6 @@ jobs:
         run: terraform plan -input=false -var-file=terraform.tfvars
 
       - uses: actions/github-script@v6
-        if: github.event_name == 'pull_request'
         env:
           PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
         with:
@@ -133,7 +132,7 @@ jobs:
         if: steps.plan.outcome == 'failure'
         run: exit 1
 
-      # - name: Terraform Apply
-      #   working-directory: deploy/infra/env/prod
-      #   run: |
-      #     terraform apply -auto-approve -input=false -var-file=terraform.tfvars 
+      - name: Terraform Apply
+        working-directory: deploy/infra/env/prod
+        run: |
+          terraform apply -auto-approve -input=false -var-file=terraform.tfvars 
