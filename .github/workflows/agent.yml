@@ -7,6 +7,7 @@ on:
     paths:
       - 'chatbot/agent/**'
       - '.github/workflows/agent.yml'
+      - 'deploy/infra/**'
     types:
       - closed
 
