@@ -8,7 +8,7 @@ resource "aws_sagemaker_model" "agent_model" {
 }
 
 resource "aws_sagemaker_endpoint_configuration" "agent_endpoint_config" {
-  name = "${var.model_name}-config"
+  name = "${var.model_name}-config-${formatdate("YYYYMMDDHHmmss", timestamp())}"
 
   production_variants {
     variant_name           = "default"
