@@ -1,0 +1,9 @@
+fastapi==0.115.12
+uvicorn[standard]==0.34.0
+transformers==4.50.3
+torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+pydantic==2.11.2
+pydantic-settings==2.8.1
+httpx==0.28.1
+gunicorn==23.0.0
+hf_xet
