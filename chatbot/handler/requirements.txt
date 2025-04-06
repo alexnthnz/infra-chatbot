@@ -1,0 +1,12 @@
+fastapi==0.115.12
+uvicorn[standard]==0.34.0
+mangum==0.19.0
+pyjwt==2.10.1
+sqlalchemy==2.0.40
+psycopg2-binary==2.9.10
+python-dotenv==1.1.0
+google-auth==2.38.0
+google-auth-oauthlib==1.2.1
+requests==2.32.3
+bcrypt==4.3.0
+pydantic[email]
