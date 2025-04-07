@@ -1,25 +1,49 @@
-from fastapi import Depends, HTTPException, status, Header
-from sqlalchemy.orm import Session
+from fastapi import Depends, status, Header
+from fastapi.responses import JSONResponse
 
-from database.database import get_db
-from database.crud import get_user_by_email
+from auth.jwt_handler import verify_access_token
+from repository.user import UserRepository, get_user_repository
+from schemas.responses.common import CommonResponse
 
-from .jwt_handler import verify_jwt_token
 
-
-def get_current_user(token: str = Header(..., alias="Authorization"), db: Session = Depends(get_db)):
+def get_current_user(token: str = Header(..., alias="Authorization"),
+                     user_repo: UserRepository = Depends(get_user_repository)):
     if not token.startswith("Bearer "):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token format")
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content=CommonResponse(
+                message="Invalid token format",
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                data=None,
+                error="Token must start with 'Bearer '"
+            ).dict()
+        )
     token = token.split(" ")[1]
-    payload = verify_jwt_token(token)
-    email = payload.get("sub")
-    user_id = payload.get("id")
-
-    if email is None or user_id is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-    user = get_user_by_email(db, email)
-    
-    if user is None or str(user.id) != user_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or invalid ID")
-    
-    return user
+    payload = verify_access_token(token)
+    if isinstance(payload, dict):  # Successful token verification
+        email = payload.get("sub")
+        user_id = payload.get("id")
+        if email is None or user_id is None:
+            return JSONResponse(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                content=CommonResponse(
+                    message="Invalid token",
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    data=None,
+                    error="Token missing required fields"
+                ).dict()
+            )
+        user = user_repo.get_user_by_email(email)
+        if user is None or str(user.id) != user_id:
+            return JSONResponse(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                content=CommonResponse(
+                    message="User not found or invalid ID",
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    data=None,
+                    error="User does not exist or token ID mismatch"
+                ).dict()
+            )
+        return user
+    else:
+        return payload
