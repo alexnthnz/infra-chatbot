@@ -18,12 +18,14 @@ flow = Flow.from_client_config(
     scopes=SCOPES
 )
 
+
 def get_google_auth_url():
     authorization_url, state = flow.authorization_url(
         access_type="offline",
         include_granted_scopes="true"
     )
     return authorization_url, state
+
 
 def handle_google_callback(code: str):
     flow.fetch_token(code=code)
