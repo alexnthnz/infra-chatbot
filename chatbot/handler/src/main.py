@@ -3,6 +3,7 @@ import bcrypt
 from fastapi import FastAPI, Depends, status, Header
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 
 from auth import jwt_handler, social_login, dependencies
@@ -21,6 +22,16 @@ app.mount("/api/v1", api_v1)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login")
 
 database.Base.metadata.create_all(bind=database.engine)
+
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
 
 @api_v1.post("/register", response_model=CommonResponse)
