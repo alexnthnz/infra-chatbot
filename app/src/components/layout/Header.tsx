@@ -1,7 +1,8 @@
 'use client';
 
-import { IoLogOutOutline } from 'react-icons/io5';
+import { ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 import { signOut } from 'next-auth/react';
+import { Button } from '@/components/ui/button';
 
 export function Header() {
   const handleSignOut = async () => {
@@ -18,13 +19,14 @@ export function Header() {
           <h1 className="text-xl font-semibold">Infra Chatbot</h1>
         </div>
         <div className="flex items-center gap-4">
-          <button
+          <Button
+            variant="ghost"
             onClick={handleSignOut}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 rounded-md hover:bg-gray-100"
+            className="flex items-center gap-2"
           >
-            <IoLogOutOutline className="h-5 w-5" />
+            <ArrowRightOnRectangleIcon className="h-5 w-5" />
             <span>Sign out</span>
-          </button>
+          </Button>
         </div>
       </div>
     </header>
