@@ -11,3 +11,5 @@ requests==2.32.3
 bcrypt==4.3.0
 pydantic[email]
 redis==5.2.1
+boto3==1.37.31
+httpx==0.28.1
