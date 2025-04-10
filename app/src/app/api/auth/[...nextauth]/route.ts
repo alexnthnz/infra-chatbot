@@ -2,7 +2,6 @@ import NextAuth, { DefaultSession } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import GithubProvider from 'next-auth/providers/github';
-import { JWT } from 'next-auth/jwt';
 import { env } from '@/env';
 
 // Define user interface
@@ -25,7 +24,7 @@ declare module 'next-auth' {
     accessToken?: string;
     refreshToken?: string;
     userId?: string;
-    user: DefaultSession["user"] & Partial<UserDetails>;
+    user: DefaultSession['user'] & Partial<UserDetails>;
   }
   interface User {
     accessToken?: string;
@@ -90,7 +89,7 @@ const handler = NextAuth({
 
           // Extract tokens from the response data
           const { access_token, refresh_token } = data.data;
-          
+
           // Check if tokens exist
           if (!access_token || !refresh_token) {
             throw new Error('Authentication tokens not found in response');
@@ -124,19 +123,19 @@ const handler = NextAuth({
         token.accessToken = user.accessToken;
         token.refreshToken = user.refreshToken;
         token.userId = user.id;
-        
+
         // Fetch user data if we have an access token
         if (user.accessToken) {
           try {
             const meResponse = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/v1/me`, {
               method: 'GET',
               headers: {
-                'Authorization': `Bearer ${user.accessToken}`,
+                Authorization: `Bearer ${user.accessToken}`,
               },
             });
-            
+
             const userData = await meResponse.json();
-            
+
             if (meResponse.ok && !userData.error) {
               // Save user data to token
               token.userDetails = userData.data;
@@ -159,7 +158,7 @@ const handler = NextAuth({
         session.accessToken = token.accessToken;
         session.refreshToken = token.refreshToken;
         session.userId = token.userId;
-        
+
         // Add user details to session
         if (token.userDetails) {
           session.user = {
@@ -167,7 +166,7 @@ const handler = NextAuth({
             ...token.userDetails,
           };
         }
-        
+
         // Add specific user properties for easier access
         if (session.user) {
           session.user.name = token.username || session.user.name;
@@ -189,7 +188,7 @@ const handler = NextAuth({
               'Refresh-Token': token.refreshToken as string,
             },
           });
-          
+
           if (!response.ok) {
             console.error('Failed to logout from API:', await response.text());
           }

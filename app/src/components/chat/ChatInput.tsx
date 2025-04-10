@@ -1,11 +1,11 @@
-import { FormEvent, useRef, KeyboardEvent, useState } from 'react';
+import { useRef, KeyboardEvent, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { 
-  PaperAirplaneIcon, 
-  MicrophoneIcon, 
+import {
+  PaperAirplaneIcon,
+  MicrophoneIcon,
   PhotoIcon,
   LinkIcon,
-  PaperClipIcon 
+  PaperClipIcon,
 } from '@heroicons/react/24/outline';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -51,21 +51,28 @@ export function ChatInput({ isLoading, onSubmit, disabled }: ChatInputProps) {
 
     textarea.style.height = 'auto';
     textarea.style.height = `${textarea.scrollHeight}px`;
-    
+
     setIsTyping(textarea.value.trim().length > 0);
   };
 
   return (
     <form onSubmit={handleSubmit} className="px-3 py-2">
-      <div className={cn(
-        'flex items-end gap-1.5 bg-white border border-gray-200 rounded-lg shadow-sm',
-        'focus-within:ring-1 focus-within:ring-indigo-500 focus-within:border-indigo-500'
-      )}>
+      <div
+        className={cn(
+          'flex items-end gap-1.5 bg-white border border-gray-200 rounded-lg shadow-sm',
+          'focus-within:ring-1 focus-within:ring-indigo-500 focus-within:border-indigo-500'
+        )}
+      >
         <div className="flex items-center space-x-1 px-2 py-1.5">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-gray-600">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0 text-gray-400 hover:text-gray-600"
+                >
                   <PaperClipIcon className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -74,11 +81,16 @@ export function ChatInput({ isLoading, onSubmit, disabled }: ChatInputProps) {
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          
+
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-gray-600">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0 text-gray-400 hover:text-gray-600"
+                >
                   <PhotoIcon className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -87,11 +99,16 @@ export function ChatInput({ isLoading, onSubmit, disabled }: ChatInputProps) {
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          
+
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-gray-600">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0 text-gray-400 hover:text-gray-600"
+                >
                   <LinkIcon className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -101,7 +118,7 @@ export function ChatInput({ isLoading, onSubmit, disabled }: ChatInputProps) {
             </Tooltip>
           </TooltipProvider>
         </div>
-        
+
         <Textarea
           ref={textareaRef}
           rows={1}
@@ -125,13 +142,18 @@ export function ChatInput({ isLoading, onSubmit, disabled }: ChatInputProps) {
             'overflow-y-auto'
           )}
         />
-        
+
         <div className="flex items-center pr-2 pl-1 py-1.5">
           {!isTyping ? (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-gray-600">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 text-gray-400 hover:text-gray-600"
+                  >
                     <MicrophoneIcon className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
@@ -154,11 +176,9 @@ export function ChatInput({ isLoading, onSubmit, disabled }: ChatInputProps) {
           )}
         </div>
       </div>
-      
+
       <div className="flex justify-center mt-1">
-        <p className="text-xs text-gray-500">
-          Shift + Enter for new line
-        </p>
+        <p className="text-xs text-gray-500">Shift + Enter for new line</p>
       </div>
     </form>
   );
