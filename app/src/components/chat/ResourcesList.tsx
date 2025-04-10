@@ -19,21 +19,21 @@ export function ResourcesList({ resources }: ResourcesListProps) {
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-lg font-medium">Related Resources</h3>
       </div>
-      
+
       {resources.length === 0 ? (
         <p className="text-sm text-gray-500 py-4 text-center">
           No resources available for this conversation.
         </p>
       ) : (
         <div className="space-y-3">
-          {resources.map((resource) => (
+          {resources.map(resource => (
             <Card key={resource.id} className="p-3">
               <div className="flex justify-between">
                 <h4 className="font-medium">{resource.title}</h4>
                 {resource.url && (
-                  <a 
-                    href={resource.url} 
-                    target="_blank" 
+                  <a
+                    href={resource.url}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-indigo-600 hover:text-indigo-800"
                   >
@@ -53,4 +53,4 @@ export function ResourcesList({ resources }: ResourcesListProps) {
       )}
     </div>
   );
-} 
+}

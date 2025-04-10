@@ -24,10 +24,8 @@ export default function ChatIndexPage() {
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-2/3" />
         </div>
-        <div className="mt-6 text-center text-sm text-gray-500">
-          Creating a new chat session...
-        </div>
+        <div className="mt-6 text-center text-sm text-gray-500">Creating a new chat session...</div>
       </Card>
     </div>
   );
-} 
+}
