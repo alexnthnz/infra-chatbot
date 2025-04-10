@@ -29,6 +29,18 @@ class Config:
     REDIS_PORT: int = int(os.getenv("REDIS_PORT", "6379"))
     REDIS_DB: int = int(os.getenv("REDIS_DB", "0"))
 
+    # AWS S3 configuration
+    AWS_ACCESS_KEY_ID: str = os.getenv("AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY: str = os.getenv("AWS_SECRET_ACCESS_KEY")
+    AWS_REGION: str = os.getenv("AWS_REGION", "us-east-1")  # Default region
+    S3_BUCKET: str = os.getenv("S3_BUCKET")
+
+    # Agent Service configuration
+    AGENT_SERVICE_URL: str = os.getenv("AGENT_SERVICE_URL", "http://agent-service:8001")
+
+    # Core Service configuration
+    CORE_SERVICE_URL: str = os.getenv("CORE_SERVICE_URL", "http://core-service:8002")
+
     # Validate required environment variables
     def __post_init__(self):
         required_vars = [
@@ -37,7 +49,12 @@ class Config:
             "JWT_REFRESH_SECRET",
             "GOOGLE_CLIENT_ID",
             "GOOGLE_CLIENT_SECRET",
-            "GOOGLE_REDIRECT_URI"
+            "GOOGLE_REDIRECT_URI",
+            "AWS_ACCESS_KEY_ID",
+            "AWS_SECRET_ACCESS_KEY",
+            "S3_BUCKET",
+            "AGENT_SERVICE_URL",
+            "CORE_SERVICE_URL"
         ]
         for var in required_vars:
             if not getattr(self, var):
