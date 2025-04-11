@@ -5,6 +5,18 @@ module "shared" {
   foundation_model_role_name  = var.foundation_model_role_name
   model_artifacts_bucket_name = var.model_artifacts_bucket_name
   aws_region                  = var.aws_region
+  project                     = var.project
+  cidr_block                  = var.cidr_block
+  environment                 = var.environment
+
+  rds_postgres_db_name        = var.rds_postgres_db_name
+  rds_postgres_username       = var.rds_postgres_username
+  rds_postgres_password       = var.rds_postgres_password
+  rds_postgres_instance_type  = var.rds_postgres_instance_type
+  rds_postgres_port           = var.rds_postgres_port
+
+  elasticache_redis_port      = var.elasticache_redis_port
+  elasticache_redis_instance_type = var.elasticache_redis_instance_type
 }
 
 module "agent" {
