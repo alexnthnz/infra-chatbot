@@ -1,3 +1,51 @@
+variable "project" {
+  description = "Project name for tagging resources"
+  type        = string
+}
+
+variable "cidr_block" {
+  type        = string
+  description = "The CIDR block that will be used for the VPC."
+}
+
+variable "rds_postgres_db_name" {
+  description = "Name of the PostgreSQL database."
+  type        = string
+}
+
+variable "rds_postgres_username" {
+  description = "Username for the PostgreSQL database."
+  type        = string
+}
+
+variable "rds_postgres_password" {
+  description = "Password for the PostgreSQL database."
+  type        = string
+  sensitive   = true
+}
+
+variable "rds_postgres_instance_type" {
+  description = "Instance type for the PostgreSQL database."
+  type        = string
+}
+
+variable "rds_postgres_port" {
+  description = "Port for the PostgreSQL database."
+  type        = number
+  default     = 5432
+}
+
+variable "elasticache_redis_port" {
+  description = "Port for the ElastiCache Redis cluster."
+  type        = number
+  default     = 6379
+}
+
+variable "elasticache_redis_instance_type" {
+  description = "Instance type for the ElastiCache Redis cluster."
+  type        = string
+}
+
 variable "aws_region" {
   description = "AWS region for deployment"
   type        = string
