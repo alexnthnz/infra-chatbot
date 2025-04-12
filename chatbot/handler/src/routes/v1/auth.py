@@ -88,6 +88,11 @@ def login(user: UserLogin, user_repo: UserRepository = Depends(get_user_reposito
     user_repo.update_last_login(db_user)
 
     access_token, refresh_token, refresh_expires_at = jwt_handler.create_tokens(db_user.id, db_user.email)
+    
+    # Store user data in Redis for faster access
+    user_data = UserInDB.from_orm(db_user).dict()
+    redis_client.store_user_data(str(db_user.id), user_data, ttl_seconds=3600)
+    
     return CommonResponse(
         message="Login successful",
         status_code=status.HTTP_200_OK,
@@ -198,7 +203,8 @@ def refresh_token(refresh_token: str = Header(..., alias="Refresh-Token"),
 
 
 @api_v1.post("/logout", response_model=CommonResponse)
-def logout(refresh_token: str = Header(..., alias="Refresh-Token")):
+def logout(refresh_token: str = Header(..., alias="Refresh-Token"), 
+           current_user=Depends(dependencies.get_current_user)):
     payload = jwt_handler.verify_refresh_token(refresh_token)
     if isinstance(payload, JSONResponse):
         return payload
@@ -206,6 +212,11 @@ def logout(refresh_token: str = Header(..., alias="Refresh-Token")):
     # Blacklist the refresh token
     expires_at = datetime.utcfromtimestamp(payload["exp"])
     redis_client.blacklist_token(refresh_token, expires_at)
+    
+    # Delete user data from Redis
+    user_id = payload.get("id")
+    if user_id:
+        redis_client.delete_user_data(user_id)
 
     return CommonResponse(
         message="Logout successful",
