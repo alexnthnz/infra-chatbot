@@ -9,7 +9,7 @@ s3_client = boto3.client(
     "s3",
     aws_access_key_id=config.AWS_ACCESS_KEY_ID,
     aws_secret_access_key=config.AWS_SECRET_ACCESS_KEY,
-    region_name=config.AWS_REGION
+    region_name=config.AWS_REGION,
 )
 
 
@@ -37,30 +37,22 @@ def upload_to_s3(file: UploadFile, folder: str = "uploads", expires_in: int = 36
             file.file,  # File object from UploadFile
             config.S3_BUCKET,
             file_key,
-            ExtraArgs={"ContentType": file.content_type}  # Set MIME type
+            ExtraArgs={"ContentType": file.content_type},  # Set MIME type
         )
 
         # Generate a presigned URL for temporary access
         file_url = s3_client.generate_presigned_url(
-            "get_object",
-            Params={
-                "Bucket": config.S3_BUCKET,
-                "Key": file_key
-            },
-            ExpiresIn=expires_in
+            "get_object", Params={"Bucket": config.S3_BUCKET, "Key": file_key}, ExpiresIn=expires_in
         )
         return file_url
 
     except ClientError as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to upload file to S3 or generate presigned URL: {str(e)}"
+            detail=f"Failed to upload file to S3 or generate presigned URL: {str(e)}",
         )
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Unexpected error during S3 upload: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Unexpected error during S3 upload: {str(e)}")
 
 
 def get_s3_client() -> boto3.client:
@@ -83,16 +75,8 @@ def generate_presigned_url(file_key: str, expires_in: int = 3600) -> str:
     """
     try:
         url = s3_client.generate_presigned_url(
-            "get_object",
-            Params={
-                "Bucket": config.S3_BUCKET,
-                "Key": file_key
-            },
-            ExpiresIn=expires_in
+            "get_object", Params={"Bucket": config.S3_BUCKET, "Key": file_key}, ExpiresIn=expires_in
         )
         return url
     except ClientError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to generate presigned URL: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to generate presigned URL: {str(e)}")

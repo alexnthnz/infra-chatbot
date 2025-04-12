@@ -15,14 +15,13 @@ flow = Flow.from_client_config(
             "token_uri": "https://oauth2.googleapis.com/token",
         }
     },
-    scopes=SCOPES
+    scopes=SCOPES,
 )
 
 
 def get_google_auth_url():
     authorization_url, state = flow.authorization_url(
-        access_type="offline",
-        include_granted_scopes="true"
+        access_type="offline", include_granted_scopes="true"
     )
     return authorization_url, state
 
@@ -34,8 +33,4 @@ def handle_google_callback(code: str):
         credentials.id_token, requests.Request(), config.GOOGLE_CLIENT_ID
     )
 
-    return {
-        "email": id_info["email"],
-        "google_id": id_info["sub"],
-        "name": id_info.get("name")
-    }
+    return {"email": id_info["email"], "google_id": id_info["sub"], "name": id_info.get("name")}

@@ -54,7 +54,7 @@ class Config:
             "AWS_SECRET_ACCESS_KEY",
             "S3_BUCKET",
             "AGENT_SERVICE_URL",
-            "CORE_SERVICE_URL"
+            "CORE_SERVICE_URL",
         ]
         for var in required_vars:
             if not getattr(self, var):

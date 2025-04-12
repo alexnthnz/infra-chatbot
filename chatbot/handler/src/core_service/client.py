@@ -17,26 +17,22 @@ async def generate_response(prompt: str) -> str:
     Raises:
         HTTPException: If the Core Service call fails.
     """
-    payload = {
-        "prompt": prompt
-    }
+    payload = {"prompt": prompt}
 
     async with httpx.AsyncClient() as client:
         try:
             response = await client.post(
                 f"{config.CORE_SERVICE_URL}/generate",
                 json=payload,
-                timeout=10.0  # 10-second timeout
+                timeout=10.0,  # 10-second timeout
             )
             response.raise_for_status()
             return response.json()["response"]
         except httpx.HTTPStatusError as e:
             raise HTTPException(
-                status_code=e.response.status_code,
-                detail=f"Core Service error: {e.response.text}"
+                status_code=e.response.status_code, detail=f"Core Service error: {e.response.text}"
             )
         except httpx.RequestError as e:
             raise HTTPException(
-                status_code=500,
-                detail=f"Failed to connect to Core Service: {str(e)}"
+                status_code=500, detail=f"Failed to connect to Core Service: {str(e)}"
             )

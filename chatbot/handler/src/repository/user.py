@@ -22,8 +22,15 @@ class UserRepository:
     def get_user_by_google_id(self, google_id: str) -> User | None:
         return self.db.query(User).filter(User.google_id == google_id).first()
 
-    def create_user(self, email: str, username: str, hashed_password: str = None,
-                    google_id: str = None, phone_number: str = None, profile_picture_url: str = None) -> User:
+    def create_user(
+        self,
+        email: str,
+        username: str,
+        hashed_password: str = None,
+        google_id: str = None,
+        phone_number: str = None,
+        profile_picture_url: str = None,
+    ) -> User:
         user = User(
             id=uuid.uuid4(),
             email=email,
@@ -43,7 +50,9 @@ class UserRepository:
         self.db.commit()
         self.db.refresh(user)
 
-    def increment_failed_login_attempts(self, user: User, max_attempts: int = 5, lockout_minutes: int = 15) -> None:
+    def increment_failed_login_attempts(
+        self, user: User, max_attempts: int = 5, lockout_minutes: int = 15
+    ) -> None:
         user.failed_login_attempts += 1
         if user.failed_login_attempts >= max_attempts:
             user.locked_until = datetime.utcnow() + timedelta(minutes=lockout_minutes)

@@ -17,11 +17,7 @@ class ChatRepository:
 
     def create_chat(self, user: User, title: str = None) -> Chat:
         """Create a new chat for the user."""
-        chat = Chat(
-            id=uuid.uuid4(),
-            user_id=user.id,
-            title=title
-        )
+        chat = Chat(id=uuid.uuid4(), user_id=user.id, title=title)
         self.db.add(chat)
         self.db.commit()
         self.db.refresh(chat)
