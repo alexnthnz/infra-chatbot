@@ -40,8 +40,8 @@ def verify_access_token(token: str):
                     message="Invalid token type",
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     data=None,
-                    error="Token is not an access token"
-                ).dict()
+                    error="Token is not an access token",
+                ).dict(),
             )
         return payload
     except jwt.ExpiredSignatureError:
@@ -51,8 +51,8 @@ def verify_access_token(token: str):
                 message="Access token has expired",
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 data=None,
-                error="Expired access token"
-            ).dict()
+                error="Expired access token",
+            ).dict(),
         )
     except jwt.InvalidTokenError:
         return JSONResponse(
@@ -61,8 +61,8 @@ def verify_access_token(token: str):
                 message="Invalid access token",
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 data=None,
-                error="Invalid access token format or signature"
-            ).dict()
+                error="Invalid access token format or signature",
+            ).dict(),
         )
 
 
@@ -75,8 +75,8 @@ def verify_refresh_token(token: str):
                     message="Refresh token has been revoked",
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     data=None,
-                    error="Revoked refresh token"
-                ).dict()
+                    error="Revoked refresh token",
+                ).dict(),
             )
 
         payload = jwt.decode(token, config.JWT_REFRESH_SECRET, algorithms=[config.JWT_ALGORITHM])
@@ -87,8 +87,8 @@ def verify_refresh_token(token: str):
                     message="Invalid token type",
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     data=None,
-                    error="Token is not a refresh token"
-                ).dict()
+                    error="Token is not a refresh token",
+                ).dict(),
             )
         return payload
     except jwt.ExpiredSignatureError:
@@ -98,8 +98,8 @@ def verify_refresh_token(token: str):
                 message="Refresh token has expired",
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 data=None,
-                error="Expired refresh token"
-            ).dict()
+                error="Expired refresh token",
+            ).dict(),
         )
     except jwt.InvalidTokenError:
         return JSONResponse(
@@ -108,6 +108,6 @@ def verify_refresh_token(token: str):
                 message="Invalid refresh token",
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 data=None,
-                error="Invalid refresh token format or signature"
-            ).dict()
+                error="Invalid refresh token format or signature",
+            ).dict(),
         )

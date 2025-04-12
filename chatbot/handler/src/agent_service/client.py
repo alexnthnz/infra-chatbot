@@ -18,27 +18,22 @@ async def enhance_prompt(content: Optional[str] = None, file_url: Optional[str] 
     Raises:
         HTTPException: If the Agent Service call fails.
     """
-    payload = {
-        "content": content,
-        "file_url": file_url
-    }
+    payload = {"content": content, "file_url": file_url}
 
     async with httpx.AsyncClient() as client:
         try:
             response = await client.post(
                 f"{config.AGENT_SERVICE_URL}/enhance",
                 json=payload,
-                timeout=10.0  # 10-second timeout
+                timeout=10.0,  # 10-second timeout
             )
             response.raise_for_status()
             return response.json()["enhanced_prompt"]
         except httpx.HTTPStatusError as e:
             raise HTTPException(
-                status_code=e.response.status_code,
-                detail=f"Agent Service error: {e.response.text}"
+                status_code=e.response.status_code, detail=f"Agent Service error: {e.response.text}"
             )
         except httpx.RequestError as e:
             raise HTTPException(
-                status_code=500,
-                detail=f"Failed to connect to Agent Service: {str(e)}"
+                status_code=500, detail=f"Failed to connect to Agent Service: {str(e)}"
             )

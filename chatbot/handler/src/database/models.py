@@ -64,7 +64,9 @@ class Message(Base):
     chat_id = Column(UUID(as_uuid=True), ForeignKey("chats.id"), nullable=False, index=True)
     sender = Column(Enum(SenderType), nullable=False)  # Enum for user, agent, or core
     content = Column(String, nullable=True)  # Text content, nullable if only a file
-    file_id = Column(UUID(as_uuid=True), ForeignKey("files.id"), nullable=True, index=True)  # Link to file
+    file_id = Column(
+        UUID(as_uuid=True), ForeignKey("files.id"), nullable=True, index=True
+    )  # Link to file
     message_metadata = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

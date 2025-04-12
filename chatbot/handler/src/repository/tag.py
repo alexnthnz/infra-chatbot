@@ -18,11 +18,7 @@ class TagRepository:
         """Create a new tag for the user, or return existing one if it exists."""
         tag = self.db.query(Tag).filter(Tag.user_id == user.id, Tag.name == name).first()
         if not tag:
-            tag = Tag(
-                id=uuid.uuid4(),
-                user_id=user.id,
-                name=name
-            )
+            tag = Tag(id=uuid.uuid4(), user_id=user.id, name=name)
             self.db.add(tag)
             self.db.commit()
             self.db.refresh(tag)
@@ -36,7 +32,11 @@ class TagRepository:
 
     def remove_tag_from_chat(self, chat_id: uuid.UUID, tag_id: uuid.UUID) -> None:
         """Remove a tag association from a chat."""
-        chat_tag = self.db.query(ChatTag).filter(ChatTag.chat_id == chat_id, ChatTag.tag_id == tag_id).first()
+        chat_tag = (
+            self.db.query(ChatTag)
+            .filter(ChatTag.chat_id == chat_id, ChatTag.tag_id == tag_id)
+            .first()
+        )
         if chat_tag:
             self.db.delete(chat_tag)
             self.db.commit()
