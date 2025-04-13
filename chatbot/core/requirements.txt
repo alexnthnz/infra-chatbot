@@ -7,3 +7,4 @@ pydantic-settings==2.8.1
 httpx==0.28.1
 gunicorn==23.0.0
 hf_xet
+black==24.2.0
