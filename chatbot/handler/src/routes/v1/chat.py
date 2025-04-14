@@ -1,4 +1,4 @@
-from fastapi import Depends, status, UploadFile, File, Form, HTTPException
+from fastapi import Depends, status, UploadFile, File, Form, HTTPException, FastAPI
 from fastapi.responses import JSONResponse
 from typing import Optional
 import uuid
@@ -12,14 +12,15 @@ from repository.chat import get_chat_repository, ChatRepository
 from repository.message import get_message_repository, MessageRepository
 from repository.file import get_file_repository, FileRepository
 from repository.tag import get_tag_repository, TagRepository
-from routes.v1 import api_v1
 from schemas.requests.chat import ChatCreate, TagCreate
 from schemas.responses.chat import ChatInDB, ChatDetailInDB, MessageInDB, TagInDB
 from schemas.responses.common import CommonResponse
 from database.models import SenderType
 
+router = FastAPI()
 
-@api_v1.post("/chats", response_model=CommonResponse, status_code=status.HTTP_201_CREATED)
+
+@router.post("/", response_model=CommonResponse, status_code=status.HTTP_201_CREATED)
 def create_chat(
     chat: ChatCreate,
     user=Depends(get_current_user),
@@ -34,7 +35,7 @@ def create_chat(
     )
 
 
-@api_v1.get("/chats", response_model=CommonResponse)
+@router.get("/", response_model=CommonResponse)
 def list_chats(
     user=Depends(get_current_user),
     chat_repo: ChatRepository = Depends(get_chat_repository),
@@ -50,12 +51,13 @@ def list_chats(
     )
 
 
-@api_v1.get("/chats/{chat_id}", response_model=CommonResponse)
+@router.get("/{chat_id}", response_model=CommonResponse)
 def get_chat(
     chat_id: uuid.UUID,
     user=Depends(get_current_user),
     chat_repo: ChatRepository = Depends(get_chat_repository),
     message_repo: MessageRepository = Depends(get_message_repository),
+    file_repo: FileRepository = Depends(get_file_repository),
     limit: int = 50,
     offset: int = 0,
 ):
@@ -80,7 +82,6 @@ def get_chat(
         if msg.file_id:
             db_file = file_repo.get_file_by_id(msg.file_id, user)
             if db_file:
-                # Regenerate presigned URL for the file
                 file_key = db_file.file_url.split(
                     f"{config.S3_BUCKET}.s3.{config.AWS_REGION}.amazonaws.com/"
                 )[-1]
@@ -95,8 +96,8 @@ def get_chat(
     )
 
 
-@api_v1.post(
-    "/chats/{chat_id}/messages", response_model=CommonResponse, status_code=status.HTTP_201_CREATED
+@router.post(
+    "/{chat_id}/messages", response_model=CommonResponse, status_code=status.HTTP_201_CREATED
 )
 async def send_message(
     chat_id: uuid.UUID,
@@ -176,9 +177,7 @@ async def send_message(
     )
 
 
-@api_v1.post(
-    "/chats/{chat_id}/tags", response_model=CommonResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("/{chat_id}/tags", response_model=CommonResponse, status_code=status.HTTP_201_CREATED)
 def add_tag(
     chat_id: uuid.UUID,
     tag: TagCreate,
@@ -208,9 +207,8 @@ def add_tag(
     )
 
 
-@api_v1.delete(
-    "/chats/{chat_id}/tags/{tag_id}",
-    response_model=CommonResponse,
+@router.delete(
+    "/{chat_id}/tags/{tag_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
 def remove_tag(
