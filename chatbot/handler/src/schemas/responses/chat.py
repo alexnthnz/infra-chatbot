@@ -22,6 +22,7 @@ class MessageInDB(MessageBase):
 
     class Config:
         from_attributes = True
+        json_encoders = {UUID: str}
 
 
 class ChatInDB(ChatBase):
@@ -33,6 +34,7 @@ class ChatInDB(ChatBase):
 
     class Config:
         from_attributes = True
+        json_encoders = {UUID: str}
 
 
 class ChatDetailInDB(ChatInDB):
@@ -44,3 +46,4 @@ class TagInDB(TagBase):
 
     class Config:
         from_attributes = True
+        json_encoders = {UUID: str}

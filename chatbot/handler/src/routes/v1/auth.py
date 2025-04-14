@@ -6,13 +6,14 @@ import bcrypt
 from auth import jwt_handler, social_login, dependencies
 from config.redis_client import redis_client
 from repository.user import get_user_repository, UserRepository
-from routes.v1 import api_v1
 from schemas.requests.user import UserCreate, UserLogin
 from schemas.responses.common import CommonResponse
 from schemas.responses.user import Token, UserInDB
 
+router = FastAPI()
 
-@api_v1.post("/register", response_model=CommonResponse)
+
+@router.post("/register", response_model=CommonResponse)
 def register(user: UserCreate, user_repo: UserRepository = Depends(get_user_repository)):
     db_user = user_repo.get_user_by_email(user.email)
     if db_user:
@@ -49,7 +50,7 @@ def register(user: UserCreate, user_repo: UserRepository = Depends(get_user_repo
     )
 
 
-@api_v1.post("/login", response_model=CommonResponse)
+@router.post("/login", response_model=CommonResponse)
 def login(user: UserLogin, user_repo: UserRepository = Depends(get_user_repository)):
     db_user = user_repo.get_user_by_email(user.email)
     if not db_user:
@@ -96,7 +97,7 @@ def login(user: UserLogin, user_repo: UserRepository = Depends(get_user_reposito
     )
 
     # Store user data in Redis for faster access
-    user_data = UserInDB.from_orm(db_user).dict()
+    user_data = UserInDB.from_orm(db_user).model_dump()
     redis_client.store_user_data(str(db_user.id), user_data, ttl_seconds=3600)
 
     return CommonResponse(
@@ -112,7 +113,7 @@ def login(user: UserLogin, user_repo: UserRepository = Depends(get_user_reposito
     )
 
 
-@api_v1.get("/auth/google")
+@router.get("/auth/google")
 def auth_google():
     auth_url, state = social_login.get_google_auth_url()
     return CommonResponse(
@@ -123,7 +124,7 @@ def auth_google():
     )
 
 
-@api_v1.get("/callback/google", response_model=CommonResponse)
+@router.get("/callback/google", response_model=CommonResponse)
 def google_callback(code: str, user_repo: UserRepository = Depends(get_user_repository)):
     try:
         user_info = social_login.handle_google_callback(code)
@@ -162,7 +163,7 @@ def google_callback(code: str, user_repo: UserRepository = Depends(get_user_repo
     )
 
 
-@api_v1.post("/refresh", response_model=CommonResponse)
+@router.post("/refresh", response_model=CommonResponse)
 def refresh_token(
     refresh_token: str = Header(..., alias="Refresh-Token"),
     user_repo: UserRepository = Depends(get_user_repository),
@@ -210,7 +211,7 @@ def refresh_token(
     )
 
 
-@api_v1.post("/logout", response_model=CommonResponse)
+@router.post("/logout", response_model=CommonResponse)
 def logout(
     refresh_token: str = Header(..., alias="Refresh-Token"),
     current_user=Depends(dependencies.get_current_user),
@@ -233,7 +234,7 @@ def logout(
     )
 
 
-@api_v1.get("/me", response_model=CommonResponse)
+@router.get("/me", response_model=CommonResponse)
 def read_users_me(current_user=Depends(dependencies.get_current_user)):
     if isinstance(current_user, JSONResponse):
         return current_user

@@ -1,5 +1,5 @@
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -7,7 +7,7 @@ from database import database
 from config.config import config
 from routes.v1 import api_v1
 
-app = FastAPI(title="Authentication Service")
+app = FastAPI(title="Handler Service")
 
 app.mount("/api/v1", api_v1)
 

@@ -64,29 +64,24 @@ class Message(Base):
     chat_id = Column(UUID(as_uuid=True), ForeignKey("chats.id"), nullable=False, index=True)
     sender = Column(Enum(SenderType), nullable=False)  # Enum for user, agent, or core
     content = Column(String, nullable=True)  # Text content, nullable if only a file
-    file_id = Column(
-        UUID(as_uuid=True), ForeignKey("files.id"), nullable=True, index=True
-    )  # Link to file
+    file_id = Column(UUID(as_uuid=True), ForeignKey("files.id"), nullable=True, index=True)
     message_metadata = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     # Relationships
     chat = relationship("Chat", back_populates="messages")
-    files = relationship("File", back_populates="message")
+    file = relationship("File", foreign_keys=[file_id])
 
 
 class File(Base):
     __tablename__ = "files"  # Renamed from "attachments"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    message_id = Column(UUID(as_uuid=True), ForeignKey("messages.id"), nullable=False, index=True)
     file_url = Column(String, nullable=False)  # URL to the file in external storage
     file_type = Column(String, nullable=True)  # e.g., "image/jpeg", "application/pdf"
     file_size = Column(Integer, nullable=True)  # Size in bytes
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-
-    message = relationship("Message", back_populates="files")
 
 
 class Tag(Base):
