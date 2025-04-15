@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, Any
+from typing import Optional, Any, Dict
 
 
 class CommonResponse(BaseModel):
@@ -7,3 +7,4 @@ class CommonResponse(BaseModel):
     status_code: int
     data: Optional[Any] = None
     error: Optional[str] = None
+    meta: Optional[Dict[str, Any]] = None

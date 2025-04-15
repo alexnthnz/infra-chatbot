@@ -1,4 +1,4 @@
-from fastapi import Depends, status, Header, FastAPI
+from fastapi import Depends, status, Header, APIRouter
 from fastapi.responses import JSONResponse
 from datetime import datetime
 import bcrypt
@@ -10,7 +10,7 @@ from schemas.requests.user import UserCreate, UserLogin
 from schemas.responses.common import CommonResponse
 from schemas.responses.user import Token, UserInDB
 
-router = FastAPI()
+router = APIRouter()
 
 
 @router.post("/register", response_model=CommonResponse)
@@ -35,8 +35,12 @@ def register(user: UserCreate, user_repo: UserRepository = Depends(get_user_repo
         profile_picture_url=user.profile_picture_url,
     )
     access_token, refresh_token, refresh_expires_at = jwt_handler.create_tokens(
-        db_user.id, db_user.email
+        user_id=str(db_user.id)
     )
+    # Store user info in Redis
+    user_info = UserInDB.from_orm(db_user).model_dump()
+    redis_client.store_user_info(user_id=str(db_user.id), user_info=user_info)
+
     return CommonResponse(
         message="User registered successfully",
         status_code=status.HTTP_200_OK,
@@ -93,12 +97,11 @@ def login(user: UserLogin, user_repo: UserRepository = Depends(get_user_reposito
     user_repo.update_last_login(db_user)
 
     access_token, refresh_token, refresh_expires_at = jwt_handler.create_tokens(
-        db_user.id, db_user.email
+        user_id=str(db_user.id)
     )
-
-    # Store user data in Redis for faster access
-    user_data = UserInDB.from_orm(db_user).model_dump()
-    redis_client.store_user_data(str(db_user.id), user_data, ttl_seconds=3600)
+    # Store user info in Redis
+    user_info = UserInDB.from_orm(db_user).model_dump()
+    redis_client.store_user_info(user_id=str(db_user.id), user_info=user_info)
 
     return CommonResponse(
         message="Login successful",
@@ -148,8 +151,12 @@ def google_callback(code: str, user_repo: UserRepository = Depends(get_user_repo
         )
     user_repo.update_last_login(db_user)
     access_token, refresh_token, refresh_expires_at = jwt_handler.create_tokens(
-        db_user.id, db_user.email
+        user_id=str(db_user.id)
     )
+    # Store user info in Redis
+    user_info = UserInDB.from_orm(db_user).model_dump()
+    redis_client.store_user_info(user_id=str(db_user.id), user_info=user_info)
+
     return CommonResponse(
         message="Google login successful",
         status_code=status.HTTP_200_OK,
@@ -172,40 +179,43 @@ def refresh_token(
     if isinstance(payload, JSONResponse):
         return payload
 
-    email = payload.get("sub")
-    user_id = payload.get("id")
-    if email is None or user_id is None:
+    user_id = payload.get("sub")
+    if user_id is None:
         return JSONResponse(
             status_code=status.HTTP_401_UNAUTHORIZED,
             content=CommonResponse(
                 message="Invalid refresh token",
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 data=None,
-                error="Refresh token missing required fields",
+                error="Refresh token missing user_id",
             ).dict(),
         )
 
-    user = user_repo.get_user_by_email(email)
-    if user is None or str(user.id) != user_id:
+    user = user_repo.get_user_by_id(user_id)
+    if user is None or not user.is_active:
         return JSONResponse(
             status_code=status.HTTP_401_UNAUTHORIZED,
             content=CommonResponse(
-                message="User not found or invalid ID",
+                message="User not found or inactive",
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 data=None,
-                error="User does not exist or token ID mismatch",
+                error="User does not exist or is inactive",
             ).dict(),
         )
 
-    access_token = jwt_handler.create_access_token(user.id, user.email)
+    access_token = jwt_handler.create_access_token(user_id=str(user.id))
+    # Store user info in Redis
+    user_info = UserInDB.from_orm(user).model_dump()
+    redis_client.store_user_info(user_id=str(user.id), user_info=user_info)
+
     return CommonResponse(
         message="Access token refreshed successfully",
         status_code=status.HTTP_200_OK,
         data=Token(
             access_token=access_token,
-            refresh_token=refresh_token,  # Return the same refresh token
+            refresh_token=refresh_token,
             token_type="bearer",
-            refresh_token_expires_at=None,  # Not needed during refresh
+            refresh_token_expires_at=None,
         ).dict(),
         error=None,
     )
@@ -220,17 +230,18 @@ def logout(
     if isinstance(payload, JSONResponse):
         return payload
 
-    # Blacklist the refresh token
+    user_id = payload.get("sub")
     expires_at = datetime.utcfromtimestamp(payload["exp"])
     redis_client.blacklist_token(refresh_token, expires_at)
-
-    # Delete user data from Redis
-    user_id = payload.get("id")
-    if user_id:
-        redis_client.delete_user_data(user_id)
+    # Delete user info and jti from Redis
+    redis_client.delete_user_info(user_id)
+    redis_client.delete_access_token_jti(user_id)
 
     return CommonResponse(
-        message="Logout successful", status_code=status.HTTP_200_OK, data=None, error=None
+        message="Logout successful",
+        status_code=status.HTTP_200_OK,
+        data=None,
+        error=None,
     )
 
 

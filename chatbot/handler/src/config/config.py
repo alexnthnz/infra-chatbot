@@ -18,6 +18,8 @@ class Config:
     JWT_ACCESS_SECRET: str = os.getenv("JWT_ACCESS_SECRET")
     JWT_REFRESH_SECRET: str = os.getenv("JWT_REFRESH_SECRET")
     JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")  # Default to HS256 if not specified
+    JWT_ISSUER: str = os.getenv("JWT_ISSUER", "your-app")
+    JWT_AUDIENCE: str = os.getenv("JWT_AUDIENCE", "api://your-app")
 
     # Google OAuth configuration
     GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID")
@@ -47,6 +49,8 @@ class Config:
             "DATABASE_URL",
             "JWT_ACCESS_SECRET",
             "JWT_REFRESH_SECRET",
+            "JWT_ISSUER",
+            "JWT_AUDIENCE",
             "GOOGLE_CLIENT_ID",
             "GOOGLE_CLIENT_SECRET",
             "GOOGLE_REDIRECT_URI",

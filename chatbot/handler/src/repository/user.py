@@ -19,6 +19,18 @@ class UserRepository:
     def get_user_by_email(self, email: str) -> User | None:
         return self.db.query(User).filter(User.email == email).first()
 
+    def get_user_by_id(self, user_id: str) -> User | None:
+        """
+        Retrieve a user by their ID.
+
+        Args:
+            user_id (str): The user's UUID as a string.
+
+        Returns:
+            User | None: The user object if found, None otherwise.
+        """
+        return self.db.query(User).filter(User.id == user_id).first()
+
     def get_user_by_google_id(self, google_id: str) -> User | None:
         return self.db.query(User).filter(User.google_id == google_id).first()
 
