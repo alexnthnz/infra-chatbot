@@ -1,10 +1,16 @@
-from pydantic import Field
+from pydantic import Field, field_validator
 from typing import Optional
 from schemas.bases.chat import ChatBase, MessageBase, TagBase
 
 
 class ChatCreate(ChatBase):
-    pass  # Inherits title: Optional[str]
+    title: str
+
+    @field_validator("title")
+    def validate_title(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Title cannot be empty")
+        return value.strip()
 
 
 class MessageCreate(MessageBase):
