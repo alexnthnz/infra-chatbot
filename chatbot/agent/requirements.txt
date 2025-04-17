@@ -7,3 +7,6 @@ pydantic-settings==2.8.1
 httpx==0.28.1
 gunicorn==23.0.0
 hf_xet
+langchain==0.3.23
+langchain-community==0.3.21
+black==24.2.0

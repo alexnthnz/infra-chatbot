@@ -4,16 +4,17 @@ from src.app.app import app
 
 client = TestClient(app)
 
+
 def test_invocations_success():
     """
     Test that a valid prompt returns a successful response with the expected structure.
     """
     # Sample prompt that should trigger a valid response
     payload = {"prompt": "What's the weather like today?"}
-    
+
     response = client.post("/invocations", json=payload)
     assert response.status_code == 200
-    
+
     data = response.json()
     # Check that all expected keys are present in the response
     assert "processed_prompt" in data  # Updated from "analysis"
@@ -30,11 +31,18 @@ def test_invocations_success():
     # Check the nested structure of category
     assert "category" in data["category"]
     assert "score" in data["category"]
-    assert data["category"]["category"] in ["declarative", "interrogative", "imperative", "exclamatory", "conversational"]
+    assert data["category"]["category"] in [
+        "declarative",
+        "interrogative",
+        "imperative",
+        "exclamatory",
+        "conversational",
+    ]
     assert 0 <= data["category"]["score"] <= 1
 
     # Check requires_internet is a boolean
     assert isinstance(data["requires_internet"], bool)
+
 
 def test_invocations_empty_prompt():
     """
@@ -46,6 +54,7 @@ def test_invocations_empty_prompt():
     data = response.json()
     assert "detail" in data
     assert data["detail"] == "Prompt is empty"
+
 
 def test_invocations_category_classification():
     """

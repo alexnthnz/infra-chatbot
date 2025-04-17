@@ -1,8 +1,24 @@
 from transformers import pipeline
+from langchain_community.utilities import GoogleSerperAPIWrapper
+from langchain.prompts.prompt import PromptTemplate
+from langchain.agents import Tool
+from langchain import hub
 
 from src.config.settings import settings
 from src.utils.logger import logger
 from src.utils.utilities import is_question  # Import is_question
+
+tools = [
+    Tool(
+        name="search",
+        description="Search the web for information",
+        func=GoogleSerperAPIWrapper().run,
+    )
+]
+
+character_prompt = hub.pull("hwchase17/react")
+prompt = PromptTemplate.from_template(character_prompt)
+
 
 def get_analyzer():
     try:
@@ -11,6 +27,7 @@ def get_analyzer():
         logger.error(f"Failed to load sentiment model: {e}")
         raise
 
+
 def get_classifier():
     try:
         return pipeline("zero-shot-classification", model=settings.internet_classifier_model)
@@ -18,8 +35,10 @@ def get_classifier():
         logger.error(f"Failed to load classifier model: {e}")
         raise
 
+
 analyzer = get_analyzer()
 classifier = get_classifier()
+
 
 def categorize_prompt(prompt: str) -> dict:
     """
@@ -35,7 +54,7 @@ def categorize_prompt(prompt: str) -> dict:
         classification = classifier(
             prompt,
             candidate_labels=settings.prompt_categories,
-            multi_label=False  # Single category per prompt
+            multi_label=False,  # Single category per prompt
         )
         category = classification["labels"][0]  # Most likely category
         score = classification["scores"][0]  # Confidence score for the top category
@@ -43,6 +62,7 @@ def categorize_prompt(prompt: str) -> dict:
     except Exception as e:
         logger.error(f"Error categorizing prompt: {e}")
         return {"category": "Unknown", "score": 0.0}
+
 
 def analyze_sentiment(prompt: str) -> dict:
     """
@@ -59,6 +79,7 @@ def analyze_sentiment(prompt: str) -> dict:
     result = analyzer(prompt)[0]
     return {"label": result["label"], "score": result["score"]}
 
+
 def check_internet_requirement(prompt: str) -> bool:
     """
     Determine if the prompt requires internet access.
@@ -70,7 +91,11 @@ def check_internet_requirement(prompt: str) -> bool:
         Boolean indicating if internet access is required.
     """
     classification = classifier(prompt, candidate_labels=settings.candidate_labels)
-    score_requires = classification["scores"][classification["labels"].index("requires internet access")]
-    score_does_not = classification["scores"][classification["labels"].index("does not require internet access")]
+    score_requires = classification["scores"][
+        classification["labels"].index("requires internet access")
+    ]
+    score_does_not = classification["scores"][
+        classification["labels"].index("does not require internet access")
+    ]
     threshold = getattr(settings, "internet_threshold", 0.3)
     return (score_requires - score_does_not) > threshold
