@@ -49,17 +49,13 @@ def sigterm_handler(nginx_pid: int, gunicorn_pid: int) -> None:
 
 def start_server() -> None:
     """Start checkbox_detector Extractor's Nginx/Gunicorn server."""
-    print(
-        f"Starting the inference server with {model_server_workers} workers.")
+    print(f"Starting the inference server with {model_server_workers} workers.")
 
     # link the log streams to stdout/err so they will be logged to the container logs
-    subprocess.check_call(
-        ["ln", "-sf", "/dev/stdout", "/var/log/nginx/access.log"])
-    subprocess.check_call(
-        ["ln", "-sf", "/dev/stderr", "/var/log/nginx/error.log"])
+    subprocess.check_call(["ln", "-sf", "/dev/stdout", "/var/log/nginx/access.log"])
+    subprocess.check_call(["ln", "-sf", "/dev/stderr", "/var/log/nginx/error.log"])
 
-    nginx = subprocess.Popen(
-        ["nginx", "-c", "/opt/program/src/nginx.conf"])
+    nginx = subprocess.Popen(["nginx", "-c", "/opt/program/src/nginx.conf"])
     gunicorn = subprocess.Popen(
         [
             "gunicorn",
@@ -73,11 +69,7 @@ def start_server() -> None:
         ]
     )
 
-    signal.signal(
-        signal.SIGTERM, 
-        lambda a,
-        b: sigterm_handler(nginx.pid, gunicorn.pid)
-    )
+    signal.signal(signal.SIGTERM, lambda a, b: sigterm_handler(nginx.pid, gunicorn.pid))
 
     # If either subprocess exits, so do we.
     pids = {nginx.pid, gunicorn.pid}
