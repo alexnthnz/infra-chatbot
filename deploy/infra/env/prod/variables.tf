@@ -1,3 +1,15 @@
+variable "aws_region" {
+  description = "AWS region for deployment"
+  type        = string
+  default     = "us-west-1"
+}
+
+variable "environment" {
+  description = "The deployment environment identifier"
+  type        = string
+  default     = "prod"
+}
+
 variable "project" {
   description = "Project name for tagging resources"
   type        = string
@@ -44,18 +56,6 @@ variable "elasticache_redis_port" {
 variable "elasticache_redis_instance_type" {
   description = "Instance type for the ElastiCache Redis cluster."
   type        = string
-}
-
-variable "aws_region" {
-  description = "AWS region for deployment"
-  type        = string
-  default     = "us-west-1"
-}
-
-variable "environment" {
-  description = "The deployment environment identifier"
-  type        = string
-  default     = "prod"
 }
 
 variable "agent_model_role_name" {

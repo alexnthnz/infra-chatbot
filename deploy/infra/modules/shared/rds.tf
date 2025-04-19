@@ -23,7 +23,7 @@ module rds_postgres {
 
   multi_az               = false
   db_subnet_group_name   = module.vpc.database_subnet_group
-  vpc_security_group_ids = [module.security_group.security_group_id]
+  vpc_security_group_ids = [module.security_group_postgres.security_group_id]
 
   publicly_accessible = false
 
@@ -46,6 +46,6 @@ module rds_postgres {
 
   depends_on = [ 
     module.vpc,
-    module.security_group,
+    module.security_group_postgres,
   ]
 }
