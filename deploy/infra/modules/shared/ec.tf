@@ -18,8 +18,8 @@ module "elasticache" {
   security_group_ids = [module.security_group_redis.security_group_id] 
 
   # Subnet Group
-  subnet_group_name        = vpc.database_subnet_group_name
-  subnet_group_description = "${title(vpc.database_subnet_group_name)} subnet group"
+  subnet_group_name        = module.vpc.database_subnet_group_name
+  subnet_group_description = "${title(module.vpc.database_subnet_group_name)} subnet group"
   subnet_ids               = module.vpc.private_subnets
 
   # Parameter Group
