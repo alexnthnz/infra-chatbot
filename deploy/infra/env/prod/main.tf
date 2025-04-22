@@ -31,4 +31,9 @@
 
 module "llm_rag" {
   source = "../../modules/llm_rag"
+
+  kb_name                  = var.kb_name
+  kb_model_id              = var.kb_model_id
+  kb_s3_bucket_name_prefix = var.kb_s3_bucket_name_prefix
+  kb_oss_collection_name   = var.kb_oss_collection_name
 }

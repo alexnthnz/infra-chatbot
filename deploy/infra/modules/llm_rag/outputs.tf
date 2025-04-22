@@ -37,4 +37,3 @@ output "knowledge_base_arn" {
   description = "The ARN of the Bedrock Agent Knowledge Base"
   value       = module.knowledge_base.knowledge_base_arn 
 }
-
