@@ -1,10 +1,13 @@
 fastapi==0.115.12
 uvicorn[standard]==0.34.0
-transformers==4.50.3
-torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
 pydantic==2.11.2
 pydantic-settings==2.8.1
 httpx==0.28.1
 gunicorn==23.0.0
-hf_xet
 black==24.2.0
+langchain==0.3.24
+boto3==1.38.0
+langchain-aws==0.2.21
+langchain-ollama==0.3.2
+requests==2.32.3
+tenacity==9.0.0

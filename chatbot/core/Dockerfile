@@ -16,28 +16,31 @@ RUN pip install --upgrade pip && \
 # Stage 2: Final image
 FROM python:3.13-slim
 
-# Set some environment variables. PYTHONUNBUFFERED keeps Python from buffering our standard
-# output stream, which means that logs can be delivered to the user quickly. PYTHONDONTWRITEBYTECODE
-# keeps Python from writing the .pyc files which are unnecessary in this case. We also update
-# PATH so that the train and serve programs are found when the container is invoked.
-
+# Set environment variables
 ENV PYTHONUNBUFFERED=TRUE
 ENV PYTHONDONTWRITEBYTECODE=TRUE
 ENV PATH="/opt/program:${PATH}"
 
+# Install runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgomp1 nginx && \
+    libgomp1 nginx curl && \
     rm -rf /var/lib/apt/lists/*
+
+# Install Ollama
+RUN curl -fsSL https://ollama.com/install.sh | sh
 
 WORKDIR /opt/program
 
+# Copy installed Python packages and binaries from build stage
 COPY --from=build-env /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
 COPY --from=build-env /usr/local/bin/uvicorn /usr/local/bin/uvicorn
 COPY --from=build-env /usr/local/bin/gunicorn /usr/local/bin/gunicorn
 
+# Copy application code
 COPY /src /opt/program/src
 
-RUN chmod +x /opt/program/src/serve_app.py
+# Make scripts executable
+RUN chmod +x /opt/program/src/serve_app.py /opt/program/src/start_ollama.sh
 
 # SageMaker entry point
 ENTRYPOINT ["python", "/opt/program/src/serve_app.py"]
