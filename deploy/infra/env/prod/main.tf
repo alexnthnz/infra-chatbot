@@ -32,8 +32,12 @@
 module "llm_rag" {
   source = "../../modules/llm_rag"
 
-  kb_name                  = var.kb_name
-  kb_model_id              = var.kb_model_id
-  kb_s3_bucket_name_prefix = var.kb_s3_bucket_name_prefix
-  kb_oss_collection_name   = var.kb_oss_collection_name
+  kb_name                          = var.kb_name
+  kb_model_id                      = var.kb_model_id
+  kb_s3_bucket_name_prefix         = var.kb_s3_bucket_name_prefix
+  kb_oss_collection_name           = var.kb_oss_collection_name
+  sagemaker_name                   = var.sagemaker_name
+  sagemaker_instance_type          = var.sagemaker_instance_type
+  sagemaker_initial_instance_count = var.sagemaker_initial_instance_count
+  sagemaker_ecr_image_uri          = var.sagemaker_ecr_image_uri
 }

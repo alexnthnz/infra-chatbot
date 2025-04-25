@@ -25,7 +25,7 @@ output "opensearch_collection_arn" {
 
 output "opensearch_index_name" {
   description = "The name of the OpenSearch index"
-  value       = module.opensearch.opensearch_index_name 
+  value       = module.opensearch.opensearch_index_name
 }
 
 output "knowledge_base_id" {
@@ -35,5 +35,20 @@ output "knowledge_base_id" {
 
 output "knowledge_base_arn" {
   description = "The ARN of the Bedrock Agent Knowledge Base"
-  value       = module.knowledge_base.knowledge_base_arn 
+  value       = module.knowledge_base.knowledge_base_arn
+}
+
+output "sagemaker_model_arn" {
+  description = "ARN of the SageMaker agent model."
+  value       = module.sagemaker.sagemaker_model_arn
+}
+
+output "sagemaker_endpoint_config_name" {
+  description = "Name of the SageMaker endpoint configuration for the agent model."
+  value       = module.sagemaker.sagemaker_endpoint_config_name
+}
+
+output "sagemaker_endpoint_name" {
+  description = "Name of the SageMaker endpoint for the agent model."
+  value       = module.sagemaker.sagemaker_endpoint_name
 }
