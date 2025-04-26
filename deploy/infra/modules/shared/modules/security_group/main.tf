@@ -1,4 +1,4 @@
-module security_group_postgres {
+module "security_group_postgres" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "5.3.0"
 
@@ -17,10 +17,10 @@ module security_group_postgres {
     },
   ]
 
-  depends_on = [ module.vpc ]
+  depends_on = [module.vpc]
 }
 
-module security_group_redis {
+module "security_group_redis" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "5.3.0"
 

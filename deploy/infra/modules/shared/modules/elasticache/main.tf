@@ -1,5 +1,5 @@
 module "elasticache" {
-  source = "terraform-aws-modules/elasticache/aws"
+  source  = "terraform-aws-modules/elasticache/aws"
   version = "1.6.0"
 
   cluster_id               = "${var.project}-${var.environment}-redis"
@@ -8,14 +8,14 @@ module "elasticache" {
 
   engine_version = "7.1"
   node_type      = var.elasticache_redis_instance_type
-  engine         = "redis" 
+  engine         = "redis"
 
   maintenance_window = "sun:05:00-sun:09:00"
   apply_immediately  = true
 
   # Security Group
-  vpc_id = module.vpc.vpc_id
-  security_group_ids = [module.security_group_redis.security_group_id] 
+  vpc_id             = module.vpc.vpc_id
+  security_group_ids = [module.security_group_redis.security_group_id]
 
   # Subnet Group
   subnet_group_name        = module.vpc.database_subnet_group_name

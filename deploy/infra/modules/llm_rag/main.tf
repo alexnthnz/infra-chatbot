@@ -4,10 +4,11 @@ module "s3_bucket" {
 }
 
 module "iam" {
-  source              = "./modules/iam"
-  kb_name             = var.kb_name
-  s3_arn              = module.s3_bucket.arn
-  kb_model_arn        = data.aws_bedrock_foundation_model.kb.model_arn
+  source         = "./modules/iam"
+  kb_name        = var.kb_name
+  s3_arn         = module.s3_bucket.arn
+  kb_model_arn   = data.aws_bedrock_foundation_model.kb.model_arn
+  sagemaker_name = var.sagemaker_name
 }
 
 module "opensearch" {
@@ -32,4 +33,13 @@ module "knowledge_base" {
   s3_arn                = module.s3_bucket.arn
   opensearch_index_name = module.opensearch.opensearch_index_name
   depends_on            = [time_sleep.delay]
+}
+
+module "sagemaker" {
+  source                           = "./modules/sagemaker"
+  sagemaker_name                   = var.sagemaker_name
+  sagemaker_role_arn               = module.iam.sagemaker_role_arn
+  sagemaker_instance_type          = var.sagemaker_instance_type
+  sagemaker_initial_instance_count = var.sagemaker_initial_instance_count
+  sagemaker_ecr_image_uri          = var.sagemaker_ecr_image_uri
 }

@@ -1,5 +1,5 @@
-module rds_postgres {
-  source = "terraform-aws-modules/rds/aws"
+module "rds_postgres" {
+  source  = "terraform-aws-modules/rds/aws"
   version = "6.11.0"
 
   identifier = "${var.project}-${var.environment}-postgres"
@@ -16,10 +16,10 @@ module rds_postgres {
   max_allocated_storage = 100
 
   manage_master_user_password = false
-  db_name  = var.rds_postgres_db_name
-  username = var.rds_postgres_username
-  port     = var.rds_postgres_port
-  password = var.rds_postgres_password
+  db_name                     = var.rds_postgres_db_name
+  username                    = var.rds_postgres_username
+  port                        = var.rds_postgres_port
+  password                    = var.rds_postgres_password
 
   multi_az               = false
   db_subnet_group_name   = module.vpc.database_subnet_group
@@ -44,7 +44,7 @@ module rds_postgres {
   monitoring_role_use_name_prefix       = true
   monitoring_role_description           = "Description for monitoring role"
 
-  depends_on = [ 
+  depends_on = [
     module.vpc,
     module.security_group_postgres,
   ]

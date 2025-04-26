@@ -62,3 +62,45 @@ resource "aws_iam_role_policy" "bedrock_kb_llm_kb_s3" {
     ]
   })
 }
+
+resource "aws_iam_role" "sagemaker_llm" {
+  name = "AmazonSageMakerExecutionRoleForFoundationModel_${var.sagemaker_name}"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Action    = "sts:AssumeRole",
+      Effect    = "Allow",
+      Principal = { Service = "sagemaker.amazonaws.com" }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "sagemaker_llm_ecr" {
+  name = "AmazonSageMakerECRAccessPolicyForFoundationModel_${var.sagemaker_name}"
+  role = aws_iam_role.sagemaker_llm.name
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "ecr:BatchCheckLayerAvailability"
+        ],
+        Resource = "arn:${local.partition}:ecr:${local.region}:${local.account_id}:repository/llm-repo"
+      },
+      {
+        Effect   = "Allow",
+        Action   = "ecr:GetAuthorizationToken",
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "sagemaker_llm_full_access" {
+  role       = aws_iam_role.sagemaker_llm.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"
+}
