@@ -1,3 +1,5 @@
+import os
+
 from pydantic_settings import BaseSettings
 
 
@@ -11,14 +13,13 @@ class Settings(BaseSettings):
     code_model_default_top_p: float = 0.95
 
     # Bedrock Knowledge Base
-    bedrock_kb: str | None = None  # Optional, validated in RAGService
+    bedrock_kb: str | None = os.getenv("BEDROCK_KB")
 
     # OpenSearch Serverless
     opensearch_endpoint: str  # e.g., https://<collection-id>.<region>.aoss.amazonaws.com
-    aws_region: str  # e.g., us-east-1
-
-    # xAI API
-    xai_api_key: str  # Required for ChatXAI
+    aws_region: str = os.getenv('AWS_REGION')
+    aws_access_key_id: str = os.getenv("AWS_ACCESS_KEY_ID")
+    aws_secret_access_key: str = os.getenv("AWS_SECRET_ACCESS_KEY")
 
     class Config:
         env_file = ".env"
