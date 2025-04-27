@@ -43,4 +43,4 @@ COPY /src /opt/program/src
 RUN chmod +x /opt/program/src/serve_app.py /opt/program/src/start_ollama.sh
 
 # SageMaker entry point
-ENTRYPOINT ["python", "/opt/program/src/serve_app.py"]
+ENTRYPOINT ["/opt/program/src/start_ollama.sh", "python", "/opt/program/src/serve_app.py"]

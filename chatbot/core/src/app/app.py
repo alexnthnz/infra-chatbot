@@ -25,7 +25,7 @@ app.add_middleware(
 
 # Initialize Ollama chat model via LangChain
 chat_model = ChatOllama(
-    model="llama3.1:8b",
+    model="llama3.2:1b",
     max_tokens=settings.code_model_max_length,
     temperature=settings.code_model_default_temperature,
     top_p=settings.code_model_default_top_p,
@@ -81,11 +81,6 @@ async def sagemaker_invocations(request: InvocationRequest):
     except Exception as e:
         logger.error(f"Invocation error: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-
-
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy"}
 
 
 @app.get("/ping")

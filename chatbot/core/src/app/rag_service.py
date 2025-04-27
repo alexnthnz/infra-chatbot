@@ -17,7 +17,10 @@ class RAGService:
             )
 
         self.knowledge_base_id = settings.bedrock_kb
-        self.bedrock_client = boto3.client("bedrock-runtime")
+        self.bedrock_client = boto3.client(
+            "bedrock-agent-runtime",
+            region_name=settings.aws_region,
+        )
         self.session = boto3.Session()
         self.credentials = self.session.get_credentials()
 
@@ -42,20 +45,17 @@ class RAGService:
 
     def embed_tool_result(self, tool_result: str, metadata: dict) -> None:
         """Embed a tool result into OpenSearch programmatically."""
-        # Generate embedding using Bedrock
         response = self.bedrock_client.invoke_model(
             modelId="amazon.titan-embed-text-v2", body=json.dumps({"inputText": tool_result})
         )
         embedding = json.loads(response["body"].read())["embedding"]
 
-        # Prepare document for OpenSearch
         document = {
             "bedrock-knowledge-base-default-vector": embedding,
             "AMAZON_BEDROCK_TEXT_CHUNK": tool_result,
             "AMAZON_BEDROCK_METADATA": metadata,
         }
 
-        # Index into OpenSearch
         url = f"{settings.opensearch_endpoint}/llm_kb/_doc"
         headers = self._sign_request("POST", url, document)
         response = requests.post(url, headers=headers, data=json.dumps(document))
@@ -68,8 +68,23 @@ class RAGService:
         retriever = AmazonKnowledgeBasesRetriever(
             knowledge_base_id=self.knowledge_base_id,
             retrieval_config={"vectorSearchConfiguration": {"numberOfResults": num_results}},
+            region_name=settings.aws_region,
         )
-        return retriever.invoke(query)
+        documents = retriever.invoke(query)
+        # Parse raw JSON if necessary
+        parsed_documents = []
+        for doc in documents:
+            try:
+                # If page_content is JSON, extract the 'content' field
+                if doc.page_content.startswith("{"):
+                    json_content = json.loads(doc.page_content)
+                    doc.page_content = json_content["content"]
+                    doc.metadata.update(json_content["metadata"])
+                    doc.metadata["title"] = json_content["title"]
+                parsed_documents.append(doc)
+            except json.JSONDecodeError:
+                parsed_documents.append(doc)
+        return parsed_documents
 
     async def build_rag_prompt(self, query: str, num_results: int = 4):
         # Retrieve documents
