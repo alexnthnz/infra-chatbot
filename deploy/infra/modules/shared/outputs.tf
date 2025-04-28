@@ -1,14 +1,14 @@
-output "agent_model_role_arn" {
-  description = "ARN of the IAM role for the agent model."
-  value       = aws_iam_role.agent_model_role.arn
+output "vpc_id" {
+  description = "The ID of the VPC"
+  value       = module.vpc.vpc_id
 }
 
-output "foundation_model_role_arn" {
-  description = "ARN of the IAM role for the foundation model."
-  value       = aws_iam_role.foundation_model_role.arn
+output "vpc_arn" {
+  description = "The ARN of the VPC"
+  value       = module.vpc.vpc_arn
 }
 
-output "agent_model_repo_url" {
-  description = "The URL of the ECR repository for the agent model."
-  value       = aws_ecr_repository.agent_model_repo.repository_url
+output "vpc_cidr" {
+  description = "The CIDR block of the VPC"
+  value       = module.vpc.vpc_cidr_block
 }
