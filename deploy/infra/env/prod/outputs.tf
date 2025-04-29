@@ -1,35 +1,92 @@
-# output "agent_model_arn" {
-#   description = "ARN of the SageMaker agent model."
-#   value       = module.agent.agent_model_arn
-# }
-#
-# output "agent_endpoint_config_name" {
-#   description = "Name of the SageMaker endpoint configuration for the agent model."
-#   value       = module.agent.agent_endpoint_config_name
-# }
-#
-# output "agent_endpoint_name" {
-#   description = "Name of the SageMaker endpoint for the agent model."
-#   value       = module.agent.agent_endpoint_name
-# }
-#
-# # Outputs for shared module
-# output "agent_model_role_arn" {
-#   description = "ARN of the IAM role for the agent model."
-#   value       = module.shared.agent_model_role_arn
-# }
-#
-# output "foundation_model_role_arn" {
-#   description = "ARN of the IAM role for the foundation model."
-#   value       = module.shared.foundation_model_role_arn
-# }
-#
-# output "s3_bucket_arn" {
-#   description = "ARN of the S3 bucket for model artifacts."
-#   value       = module.shared.s3_bucket_arn
-# }
-#
-# output "agent_model_repo_url" {
-#   description = "The URL of the ECR repository for the agent model."
-#   value       = module.shared.agent_model_repo_url
-# }
+###############################################################################
+# Outputs for the shared module
+###############################################################################
+output "vpc_id" {
+  description = "The ID of the VPC"
+  value       = module.shared.vpc_id
+}
+
+output "vpc_arn" {
+  description = "The ARN of the VPC"
+  value       = module.shared.vpc_arn
+}
+
+output "vpc_cidr" {
+  description = "The CIDR block of the VPC"
+  value       = module.shared.vpc_cidr_block
+}
+
+output "aurora_cluster_arn" {
+  description = "Amazon Resource Name (ARN) of cluster"
+  value       = module.shared.aurora_cluster_arn
+}
+
+output "aurora_cluster_id" {
+  description = "The RDS Cluster Identifier"
+  value       = module.shared.aurora_cluster_id
+}
+
+output "aurora_cluster_resource_id" {
+  description = "The RDS Cluster Resource ID"
+  value       = module.shared.aurora_cluster_resource_id
+}
+
+output "aurora_cluster_members" {
+  description = "List of RDS Instances that are a part of this cluster"
+  value       = module.shared.aurora_cluster_members
+}
+
+output "aurora_cluster_endpoint" {
+  description = "Writer endpoint for the cluster"
+  value       = module.shared.aurora_cluster_endpoint
+}
+
+output "aurora_cluster_reader_endpoint" {
+  description = "A read-only endpoint for the cluster, automatically load-balanced across replicas"
+  value       = module.shared.aurora_cluster_reader_endpoint
+}
+
+output "aurora_cluster_engine_version_actual" {
+  description = "The running version of the cluster database"
+  value       = module.shared.aurora_cluster_engine_version_actual
+}
+
+# database_name is not set on `aws_rds_cluster` resource if it was not specified, so can't be used in output
+output "aurora_cluster_database_name" {
+  description = "Name for an automatically created database on cluster creation"
+  value       = module.shared.aurora_cluster_database_name
+}
+
+output "aurora_cluster_port" {
+  description = "The database port"
+  value       = module.shared.aurora_cluster_port
+}
+
+output "cluster_master_user_secret" {
+  description = "The secret ARN for the master user"
+  value       = module.shared.aurora_cluster_master_user_secret
+}
+
+
+#############################################################################
+# Outputs for the llm_rag module
+#############################################################################
+output "llm_rag_s3_arn" {
+  description = "arn of the S3 bucket created"
+  value       = module.llm_rag.s3_arn
+}
+
+output "llm_rag_s3_bucket_name" {
+  description = "Name of the S3 bucket created"
+  value       = module.llm_rag.s3_bucket_name
+}
+
+output "llm_rag_knowledge_base_id" {
+  description = "The ID of the Bedrock Agent Knowledge Base"
+  value       = module.llm_rag.knowledge_base_id
+}
+
+output "llm_rag_knowledge_base_arn" {
+  description = "The ARN of the Bedrock Agent Knowledge Base"
+  value       = module.llm_rag.knowledge_base_arn
+}

@@ -37,6 +37,41 @@ resource "aws_iam_role_policy" "bedrock_kb_llm_kb_model" {
   })
 }
 
+resource "aws_iam_role_policy" "bedrock_kb_llm_kb_aurora_secret" {
+  name = "AmazonBedrockAuroraSecretPolicyForKnowledgeBase_${var.kb_name}"
+  role = aws_iam_role.bedrock_kb_llm_kb.name
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action   = "secretsmanager:GetSecretValue"
+        Effect   = "Allow"
+        Resource = var.aurora_secret_arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "bedrock_kb_llm_kb_aurora" {
+  name = "AmazonBedrockAuroraPolicyForKnowledgeBase_${var.kb_name}"
+  role = aws_iam_role.bedrock_kb_llm_kb.name
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action   = ["rds:DescribeDBInstances", "rds:DescribeDBClusters"]
+        Effect   = "Allow"
+        Resource = var.aurora_cluster_arn
+      },
+      {
+        Action   = ["rds-data:ExecuteStatement", "rds-data:BatchExecuteStatement"]
+        Effect   = "Allow"
+        Resource = var.aurora_cluster_arn
+      }
+    ]
+  })
+}
+
 resource "aws_iam_role_policy" "bedrock_kb_llm_kb_s3" {
   name = "AmazonBedrockS3PolicyForKnowledgeBase_${var.kb_name}"
   role = aws_iam_role.bedrock_kb_llm_kb.name
@@ -64,7 +99,7 @@ resource "aws_iam_role_policy" "bedrock_kb_llm_kb_s3" {
 }
 
 resource "aws_iam_role" "sagemaker_llm" {
-  name = "AmazonSageMakerExecutionRoleForFoundationModel_${var.sagemaker_name}"
+  name = "AmazonSageMakerExecutionRoleForLLMModel_${var.sagemaker_name}"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",

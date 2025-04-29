@@ -15,4 +15,5 @@ locals {
     cidrsubnet(var.cidr_block, 8, 7),
     cidrsubnet(var.cidr_block, 8, 8),
   ]
+  tags = {}
 }

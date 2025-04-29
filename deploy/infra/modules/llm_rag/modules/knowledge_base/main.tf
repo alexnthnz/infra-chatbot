@@ -1,24 +1,3 @@
-resource "aws_iam_role_policy" "bedrock_kb_llm_kb_model" {
-  name = "AmazonBedrockOSSPolicyForKnowledgeBase_${var.kb_name}"
-  role = var.bedrock_role_name
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action   = ["aoss:*"]
-        Effect   = "Allow"
-        Resource = [var.opensearch_arn]
-      }
-    ]
-  })
-}
-
-resource "time_sleep" "iam_consistency_delay" {
-  create_duration = "120s"
-  depends_on      = [aws_iam_role_policy.bedrock_kb_llm_kb_model]
-}
-
-
 resource "aws_bedrockagent_knowledge_base" "llm_kb" {
   name     = var.kb_name
   role_arn = var.bedrock_role_arn
@@ -29,18 +8,21 @@ resource "aws_bedrockagent_knowledge_base" "llm_kb" {
     type = "VECTOR"
   }
   storage_configuration {
-    type = "OPENSEARCH_SERVERLESS"
-    opensearch_serverless_configuration {
-      collection_arn    = var.opensearch_arn
-      vector_index_name = var.opensearch_index_name
+    type = "RDS"
+    rds_configuration {
+      database_name          = "bedrock_kb"
+      credentials_secret_arn = var.aurora_secret_arn
+      table_name             = "bedrock_integration.bedrock_kb"
+      resource_arn           = var.aurora_cluster_arn
+
       field_mapping {
-        vector_field   = "bedrock-knowledge-base-default-vector"
-        text_field     = "AMAZON_BEDROCK_TEXT_CHUNK"
-        metadata_field = "AMAZON_BEDROCK_METADATA"
+        primary_key_field = "id"
+        vector_field      = "embedding"
+        text_field        = "chunks"
+        metadata_field    = "metadata"
       }
     }
   }
-  depends_on = [time_sleep.iam_consistency_delay, aws_iam_role_policy.bedrock_kb_llm_kb_model]
 }
 
 resource "aws_bedrockagent_data_source" "llm_kb" {
