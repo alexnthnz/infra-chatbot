@@ -1,10 +1,20 @@
-variable "kb_s3_bucket_name_prefix" {
-  description = "The name prefix of the S3 bucket for the data source of the knowledge base."
+variable "aurora_cluster_arn" {
+  description = "The ARN of the Aurora cluster."
   type        = string
 }
 
-variable "kb_oss_collection_name" {
-  description = "The name of the OpenSearch Service (OSS) collection for the knowledge base."
+variable "aurora_cluster_resource_id" {
+  description = "The resource ID of the Aurora cluster."
+  type        = string
+}
+
+variable "aurora_secret_arn" {
+  description = "The ARN of the Aurora secret."
+  type        = string
+}
+
+variable "kb_s3_bucket_name_prefix" {
+  description = "The name prefix of the S3 bucket for the data source of the knowledge base."
   type        = string
 }
 

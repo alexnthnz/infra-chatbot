@@ -8,29 +8,30 @@ module "aurora" {
   version = "9.13.0"
 
   # Cluster Configuration
-  name                                = var.aurora_name
-  engine                              = "aurora-postgresql"
-  engine_version                      = "16.6"
-  engine_mode                         = "serverless"
-  master_username                     = var.aurora_master_username
-  master_password                     = var.aurora_master_password
-  publicly_accessible                 = true
+  name                = var.aurora_name
+  engine              = "aurora-postgresql"
+  engine_version      = "16.6"
+  engine_mode         = "provisioned"
+  master_username     = var.aurora_master_username
+  master_password     = var.aurora_master_password
+  publicly_accessible = true
+
+  iam_database_authentication_enabled = true
   enable_http_endpoint                = true
-  iam_database_authentication_enabled = true # Enable IAM auth for Bedrock
 
-  database_name = "bedrock_kb"
-
-  # Serverless v2 Scaling
-  scaling_configuration = {
-    min_capacity             = 1
-    max_capacity             = 2
-    auto_pause               = true
-    seconds_until_auto_pause = 300
-    seconds_before_timeout   = 600
-    timeout_action           = "ForceApplyCapacityChange"
+  database_name  = "bedrock_kb"
+  instance_class = "db.serverless"
+  instances = {
+    one = {}
+    two = {}
   }
 
-  instances = {}
+  # Serverless v2 Scaling
+  serverlessv2_scaling_configuration = {
+    min_capacity             = 0
+    max_capacity             = 2
+    seconds_until_auto_pause = 3600
+  }
 
   # Network Configuration
   vpc_id               = var.vpc_id

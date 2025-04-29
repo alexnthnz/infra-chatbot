@@ -43,3 +43,8 @@ output "cluster_port" {
   description = "The database port"
   value       = module.aurora.cluster_port
 }
+
+output "cluster_master_user_secret" {
+  description = "The secret ARN for the master user"
+  value       = module.aurora.cluster_master_user_secret
+}

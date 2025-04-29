@@ -23,12 +23,17 @@ variable "kb_model_arn" {
   description = "The ARN of the Knowledge Base model"
 }
 
-variable "opensearch_arn" {
+variable "aurora_cluster_arn" {
   type        = string
   description = "The ARN of the OpenSearch domain"
 }
 
-variable "opensearch_index_name" {
+variable "aurora_cluster_resource_id" {
   type        = string
-  description = "The name of the OpenSearch index"
+  description = "The resource ID of the OpenSearch domain"
+}
+
+variable "aurora_secret_arn" {
+  type        = string
+  description = "The ARN of the OpenSearch secret"
 }
