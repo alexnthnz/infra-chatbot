@@ -16,7 +16,6 @@ class Settings(BaseSettings):
     bedrock_kb: str | None = os.getenv("BEDROCK_KB")
 
     # OpenSearch Serverless
-    opensearch_endpoint: str  # e.g., https://<collection-id>.<region>.aoss.amazonaws.com
     aws_region: str = os.getenv('AWS_REGION')
     aws_access_key_id: str = os.getenv("AWS_ACCESS_KEY_ID")
     aws_secret_access_key: str = os.getenv("AWS_SECRET_ACCESS_KEY")
