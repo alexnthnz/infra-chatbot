@@ -1,5 +1,7 @@
 #!/bin/bash
 
+curl -fsSL https://ollama.com/install.sh | sh
+
 echo "Starting Ollama service..."
 ollama serve > /tmp/ollama.log 2>&1 &
 
