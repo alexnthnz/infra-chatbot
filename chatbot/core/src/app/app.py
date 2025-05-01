@@ -60,13 +60,6 @@ async def sagemaker_invocations(request: InvocationRequest):
         if not query:
             raise HTTPException(status_code=400, detail="Prompt cannot be empty")
 
-        # Embed tool result if provided
-        if request.tool_result:
-            logger.info(f"Embedding tool result: {request.tool_result.result}")
-            rag_service.embed_tool_result(
-                tool_result=request.tool_result.result, metadata=request.tool_result.metadata
-            )
-
         # Retrieve documents and build RAG prompt
         formatted_rag_prompt, sources = await rag_service.build_rag_prompt(query=query)
 

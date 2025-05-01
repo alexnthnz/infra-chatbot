@@ -31,11 +31,6 @@ variable "aurora_master_username" {
   type        = string
 }
 
-variable "aurora_master_password" {
-  description = "The master password for the Aurora database."
-  type        = string
-}
-
 #########################################
 # Knowledge Base Variables
 #########################################

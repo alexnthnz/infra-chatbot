@@ -1,3 +1,26 @@
+resource "null_resource" "setup_database" {
+  provisioner "local-exec" {
+    environment = {
+      PGPASSWORD = jsondecode(data.aws_secretsmanager_secret_version.this.secret_string)["password"]
+    }
+    command = <<EOT
+      psql -h ${var.aurora_cluster_endpoint} \
+           -p ${var.aurora_cluster_port} \
+           -U ${var.aurora_cluster_master_username} \
+           -d bedrock_kb <<EOF
+CREATE EXTENSION IF NOT EXISTS vector;
+CREATE SCHEMA IF NOT EXISTS bedrock_integration;
+CREATE ROLE IF NOT EXISTS bedrock_user WITH LOGIN PASSWORD '${jsondecode(data.aws_secretsmanager_secret_version.this.secret_string)["password"]}';
+GRANT ALL ON SCHEMA bedrock_integration TO bedrock_user;
+CREATE TABLE IF NOT EXISTS bedrock_integration.bedrock_kb (id uuid PRIMARY KEY, embedding vector(1024), chunks text, metadata json, custom_metadata jsonb);
+CREATE INDEX ON bedrock_integration.bedrock_kb USING hnsw (embedding vector_cosine_ops) WITH (ef_construction=256);
+CREATE INDEX ON bedrock_integration.bedrock_kb USING gin (to_tsvector('simple', chunks));
+CREATE INDEX ON bedrock_integration.bedrock_kb USING gin (custom_metadata);
+EOF
+    EOT
+  }
+}
+
 resource "aws_bedrockagent_knowledge_base" "llm_kb" {
   name     = var.kb_name
   role_arn = var.bedrock_role_arn
@@ -23,6 +46,8 @@ resource "aws_bedrockagent_knowledge_base" "llm_kb" {
       }
     }
   }
+
+  depends_on = [null_resource.setup_database]
 }
 
 resource "aws_bedrockagent_data_source" "llm_kb" {

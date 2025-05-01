@@ -13,7 +13,6 @@ module "aurora" {
   engine_version      = "16.6"
   engine_mode         = "provisioned"
   master_username     = var.aurora_master_username
-  master_password     = var.aurora_master_password
   publicly_accessible = true
 
   iam_database_authentication_enabled = true
@@ -23,7 +22,6 @@ module "aurora" {
   instance_class = "db.serverless"
   instances = {
     one = {}
-    two = {}
   }
 
   # Serverless v2 Scaling

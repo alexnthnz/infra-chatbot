@@ -17,8 +17,3 @@ variable "aurora_master_username" {
   description = "Master username for the Aurora database."
   type        = string
 }
-
-variable "aurora_master_password" {
-  description = "Master password for the Aurora database."
-  type        = string
-}

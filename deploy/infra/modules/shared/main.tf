@@ -13,7 +13,6 @@ module "aurora" {
 
   aurora_name            = var.aurora_name
   aurora_master_username = var.aurora_master_username
-  aurora_master_password = var.aurora_master_password
 
   depends_on = [module.vpc]
 }

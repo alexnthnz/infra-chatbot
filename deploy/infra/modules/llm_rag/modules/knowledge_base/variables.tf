@@ -37,3 +37,18 @@ variable "aurora_secret_arn" {
   type        = string
   description = "The ARN of the OpenSearch secret"
 }
+
+variable "aurora_cluster_endpoint" {
+  type        = string
+  description = "The endpoint of the OpenSearch domain"
+}
+
+variable "aurora_cluster_port" {
+  type        = number
+  description = "The port of the OpenSearch domain"
+}
+
+variable "aurora_cluster_master_username" {
+  type        = string
+  description = "The master username for the OpenSearch domain"
+}
