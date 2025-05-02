@@ -55,13 +55,8 @@ resource "aws_instance" "bastion" {
   key_name                    = aws_key_pair.ec2-bastion-host-key-pair.key_name
   vpc_security_group_ids      = [aws_security_group.bastion.id]
   associate_public_ip_address = false
-  user_data                   = <<-EOF
-                              #!/bin/bash
-                              yum install -y amazon-linux-extras
-                              amazon-linux-extras enable postgresql14
-                              yum install -y postgresql
-                              EOF
-  tags                        = { Name = "${var.bastion_name}-bastion" }
+
+  tags = { Name = "${var.bastion_name}-bastion" }
 
   lifecycle {
     ignore_changes = [
