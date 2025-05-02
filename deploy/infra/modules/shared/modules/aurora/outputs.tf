@@ -48,3 +48,13 @@ output "cluster_master_user_secret" {
   description = "The secret ARN for the master user"
   value       = module.aurora.cluster_master_user_secret
 }
+
+output "cluster_master_username" {
+  description = "The master username for the Aurora cluster"
+  value       = module.aurora.cluster_master_username
+}
+
+output "cluster_security_group_id" {
+  description = "The security group ID for the Aurora cluster"
+  value       = module.aurora.security_group_id
+}

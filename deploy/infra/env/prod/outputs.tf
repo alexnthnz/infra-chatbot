@@ -62,11 +62,37 @@ output "aurora_cluster_port" {
   value       = module.shared.aurora_cluster_port
 }
 
-output "cluster_master_user_secret" {
+output "aurora_cluster_master_user_secret" {
   description = "The secret ARN for the master user"
   value       = module.shared.aurora_cluster_master_user_secret
 }
 
+
+output "bastion_instance_id" {
+  description = "The ID of the bastion instance"
+  value       = module.shared.bastion_instance_id
+}
+
+output "bastion_public_ip" {
+  description = "The public IP address of the bastion host"
+  value       = module.shared.bastion_public_ip
+}
+
+output "bastion_security_group_id" {
+  description = "The ID of the security group attached to the bastion host"
+  value       = module.shared.bastion_security_group_id
+}
+
+output "bastion_private_key_path" {
+  description = "The path to the private key file for SSH access"
+  value       = module.shared.bastion_private_key_path
+  sensitive   = true
+}
+
+output "bastion_public_key_path" {
+  description = "The path to the public key file for reference"
+  value       = module.shared.bastion_public_key_path
+}
 
 #############################################################################
 # Outputs for the llm_rag module

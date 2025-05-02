@@ -1,11 +1,8 @@
 import boto3
 import json
-import requests
 from langchain_aws.retrievers import AmazonKnowledgeBasesRetriever
 from langchain.prompts import ChatPromptTemplate
 from tenacity import retry, stop_after_attempt, wait_exponential
-from botocore.auth import SigV4Auth
-from botocore.awsrequest import AWSRequest
 from src.config.settings import settings
 
 
@@ -30,38 +27,11 @@ class RAGService:
             "Use the following pieces of retrieved context to answer "
             "the question. If you don't know the answer, say that you "
             "don't know. Use three sentences maximum and keep the "
-            "answer concise.\n\n{context}"
+            "answer concise.\n\nContext:\n{context}"
         )
         self.rag_prompt = ChatPromptTemplate.from_messages(
             [("system", self.system_prompt), ("human", "{input}")]
         )
-
-    def _sign_request(self, method: str, url: str, body: dict) -> dict:
-        """Sign an HTTP request with AWS SigV4 for OpenSearch Serverless."""
-        headers = {"Content-Type": "application/json"}
-        request = AWSRequest(method=method, url=url, data=json.dumps(body), headers=headers)
-        SigV4Auth(self.credentials, "aoss", settings.aws_region).add_auth(request)
-        return request.headers
-
-    def embed_tool_result(self, tool_result: str, metadata: dict) -> None:
-        """Embed a tool result into OpenSearch programmatically."""
-        response = self.bedrock_client.invoke_model(
-            modelId="amazon.titan-embed-text-v2", body=json.dumps({"inputText": tool_result})
-        )
-        embedding = json.loads(response["body"].read())["embedding"]
-
-        document = {
-            "bedrock-knowledge-base-default-vector": embedding,
-            "AMAZON_BEDROCK_TEXT_CHUNK": tool_result,
-            "AMAZON_BEDROCK_METADATA": metadata,
-        }
-
-        url = f"{settings.opensearch_endpoint}/llm_kb/_doc"
-        headers = self._sign_request("POST", url, document)
-        response = requests.post(url, headers=headers, data=json.dumps(document))
-
-        if response.status_code != 201:
-            raise RuntimeError(f"Failed to embed tool result: {response.text}")
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=1, max=10))
     async def retrieve_documents(self, query: str, num_results: int = 4) -> list:

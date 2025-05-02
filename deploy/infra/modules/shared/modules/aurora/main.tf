@@ -1,5 +1,5 @@
-resource "aws_db_subnet_group" "aurora_public" {
-  name       = "${var.aurora_name}-public-subnet-group"
+resource "aws_db_subnet_group" "aurora_subnet_group" {
+  name       = "${var.aurora_name}-subnet-group"
   subnet_ids = var.database_subnet_ids
 }
 
@@ -13,7 +13,6 @@ module "aurora" {
   engine_version      = "16.6"
   engine_mode         = "provisioned"
   master_username     = var.aurora_master_username
-  master_password     = var.aurora_master_password
   publicly_accessible = true
 
   iam_database_authentication_enabled = true
@@ -23,7 +22,6 @@ module "aurora" {
   instance_class = "db.serverless"
   instances = {
     one = {}
-    two = {}
   }
 
   # Serverless v2 Scaling
@@ -35,7 +33,7 @@ module "aurora" {
 
   # Network Configuration
   vpc_id               = var.vpc_id
-  db_subnet_group_name = aws_db_subnet_group.aurora_public.name
+  db_subnet_group_name = aws_db_subnet_group.aurora_subnet_group.name
   security_group_rules = {
     all_ingress = {
       cidr_blocks = ["0.0.0.0/0"] # Open to all IPs
