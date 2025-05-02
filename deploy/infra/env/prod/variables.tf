@@ -31,6 +31,20 @@ variable "aurora_master_username" {
   type        = string
 }
 
+################################################
+# Bastion Variables
+################################################
+
+variable "bastion_name" {
+  description = "The name of the bastion host."
+  type        = string
+}
+
+variable "ec2_bastion_ingress_ips" {
+  description = "IP addresses for the bastion host ingress rule."
+  type        = list(string)
+}
+
 #########################################
 # Knowledge Base Variables
 #########################################

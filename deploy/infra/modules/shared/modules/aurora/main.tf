@@ -1,5 +1,5 @@
-resource "aws_db_subnet_group" "aurora_public" {
-  name       = "${var.aurora_name}-public-subnet-group"
+resource "aws_db_subnet_group" "aurora_subnet_group" {
+  name       = "${var.aurora_name}-subnet-group"
   subnet_ids = var.database_subnet_ids
 }
 
@@ -33,7 +33,7 @@ module "aurora" {
 
   # Network Configuration
   vpc_id               = var.vpc_id
-  db_subnet_group_name = aws_db_subnet_group.aurora_public.name
+  db_subnet_group_name = aws_db_subnet_group.aurora_subnet_group.name
   security_group_rules = {
     all_ingress = {
       cidr_blocks = ["0.0.0.0/0"] # Open to all IPs

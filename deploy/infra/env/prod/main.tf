@@ -6,17 +6,24 @@ module "shared" {
 
   aurora_name            = var.aurora_name
   aurora_master_username = var.aurora_master_username
+
+  bastion_name            = var.bastion_name
+  ec2_bastion_ingress_ips = var.ec2_bastion_ingress_ips
 }
 
 module "llm_rag" {
   source = "../../modules/llm_rag"
 
+  aurora_cluster_id              = module.shared.aurora_cluster_id
   aurora_cluster_arn             = module.shared.aurora_cluster_arn
   aurora_cluster_endpoint        = module.shared.aurora_cluster_endpoint
   aurora_cluster_port            = module.shared.aurora_cluster_port
   aurora_cluster_master_username = module.shared.aurora_cluster_master_username
   aurora_cluster_resource_id     = module.shared.aurora_cluster_resource_id
   aurora_secret_arn              = module.shared.aurora_cluster_master_user_secret[0].secret_arn
+
+  bastion_private_key_path = module.shared.bastion_private_key_path
+  bastion_public_ip        = module.shared.bastion_public_ip
 
   kb_name                  = var.kb_name
   kb_model_id              = var.kb_model_id

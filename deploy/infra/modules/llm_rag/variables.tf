@@ -1,3 +1,8 @@
+variable "aurora_cluster_id" {
+  description = "The ID of the Aurora cluster."
+  type        = string
+}
+
 variable "aurora_cluster_endpoint" {
   description = "The endpoint of the Aurora cluster."
   type        = string
@@ -25,6 +30,16 @@ variable "aurora_cluster_resource_id" {
 
 variable "aurora_secret_arn" {
   description = "The ARN of the Aurora secret."
+  type        = string
+}
+
+variable "bastion_private_key_path" {
+  description = "The path to the private key for the bastion host."
+  type        = string
+}
+
+variable "bastion_public_ip" {
+  description = "The public IP address of the bastion host."
   type        = string
 }
 

@@ -16,12 +16,16 @@ module "iam" {
 module "knowledge_base" {
   source = "./modules/knowledge_base"
 
+  aurora_cluster_id              = var.aurora_cluster_id
   aurora_cluster_arn             = var.aurora_cluster_arn
   aurora_cluster_resource_id     = var.aurora_cluster_resource_id
   aurora_secret_arn              = var.aurora_secret_arn
   aurora_cluster_endpoint        = var.aurora_cluster_endpoint
   aurora_cluster_port            = var.aurora_cluster_port
   aurora_cluster_master_username = var.aurora_cluster_master_username
+
+  bastion_private_key_path = var.bastion_private_key_path
+  bastion_public_ip        = var.bastion_public_ip
 
   kb_name           = var.kb_name
   bedrock_role_arn  = module.iam.bedrock_role_arn
