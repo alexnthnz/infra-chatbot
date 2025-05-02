@@ -20,6 +20,11 @@ module "aurora" {
 module "bastion" {
   source = "./modules/bastion"
 
+  aurora_secret_arn              = module.aurora.cluster_master_user_secret[0].secret_arn
+  aurora_cluster_endpoint        = module.aurora.cluster_endpoint
+  aurora_cluster_master_username = module.aurora.cluster_master_username
+  aurora_cluster_port            = module.aurora.cluster_port
+
   vpc_id                   = module.vpc.vpc_id
   public_subnet_id         = module.vpc.vpc_public_subnets[0]
   aurora_security_group_id = module.aurora.cluster_security_group_id

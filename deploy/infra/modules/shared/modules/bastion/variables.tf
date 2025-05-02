@@ -28,3 +28,23 @@ variable "key_pair_path" {
   type        = string
   default     = "./keys"
 }
+
+variable "aurora_cluster_endpoint" {
+  description = "The endpoint of the Aurora cluster"
+  type        = string
+}
+
+variable "aurora_cluster_port" {
+  description = "The port of the Aurora cluster"
+  type        = number
+}
+
+variable "aurora_cluster_master_username" {
+  description = "The master username for the Aurora cluster"
+  type        = string
+}
+
+variable "aurora_secret_arn" {
+  description = "The ARN of the Aurora secret"
+  type        = string
+}
