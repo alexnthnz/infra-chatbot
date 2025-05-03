@@ -11,7 +11,7 @@ psql -h ${ aurora_endpoint } \
      -d bedrock_kb <<SQL
 CREATE EXTENSION IF NOT EXISTS vector;
 CREATE SCHEMA IF NOT EXISTS bedrock_integration;
-CREATE ROLE IF NOT EXISTS bedrock_user WITH LOGIN PASSWORD '${ password }';
+CREATE ROLE bedrock_user WITH LOGIN PASSWORD '${ password }';
 GRANT ALL ON SCHEMA bedrock_integration TO bedrock_user;
 CREATE TABLE IF NOT EXISTS bedrock_integration.bedrock_kb (
     id uuid PRIMARY KEY,
