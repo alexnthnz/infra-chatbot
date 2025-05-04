@@ -23,3 +23,5 @@ chatbot/**/__pycache__
 
 MODULE.bazel.lock
 .env
+
+dist/

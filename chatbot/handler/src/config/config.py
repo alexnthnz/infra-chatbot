@@ -35,7 +35,7 @@ class Config:
     AWS_ACCESS_KEY_ID: str = os.getenv("AWS_ACCESS_KEY_ID")
     AWS_SECRET_ACCESS_KEY: str = os.getenv("AWS_SECRET_ACCESS_KEY")
     AWS_REGION: str = os.getenv("AWS_REGION", "us-east-1")  # Default region
-    S3_BUCKET: str = os.getenv("S3_BUCKET")
+    AWS_S3_BUCKET: str = os.getenv("AWS_S3_BUCKET")
 
     # Agent Service configuration
     AGENT_SERVICE_URL: str = os.getenv("AGENT_SERVICE_URL", "http://agent-service:8001")
@@ -56,7 +56,7 @@ class Config:
             "GOOGLE_REDIRECT_URI",
             "AWS_ACCESS_KEY_ID",
             "AWS_SECRET_ACCESS_KEY",
-            "S3_BUCKET",
+            "AWS_S3_BUCKET",
             "AGENT_SERVICE_URL",
             "CORE_SERVICE_URL",
         ]

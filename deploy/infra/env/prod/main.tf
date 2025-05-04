@@ -21,10 +21,5 @@ module "llm_rag" {
   kb_model_id              = var.kb_model_id
   kb_s3_bucket_name_prefix = var.kb_s3_bucket_name_prefix
 
-  sagemaker_name                   = var.sagemaker_name
-  sagemaker_instance_type          = var.sagemaker_instance_type
-  sagemaker_initial_instance_count = var.sagemaker_initial_instance_count
-  sagemaker_ecr_image_uri          = var.sagemaker_ecr_image_uri
-
   depends_on = [module.shared]
 }

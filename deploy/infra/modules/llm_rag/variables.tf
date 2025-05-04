@@ -22,23 +22,3 @@ variable "kb_name" {
   description = "The name of the knowledge base."
   type        = string
 }
-
-variable "sagemaker_name" {
-  description = "The name of the SageMaker instance."
-  type        = string
-}
-
-variable "sagemaker_instance_type" {
-  description = "The instance type for the SageMaker model."
-  type        = string
-}
-
-variable "sagemaker_initial_instance_count" {
-  description = "The initial instance count for the SageMaker model."
-  type        = number
-}
-
-variable "sagemaker_ecr_image_uri" {
-  description = "The ECR image URI for the SageMaker model."
-  type        = string
-}

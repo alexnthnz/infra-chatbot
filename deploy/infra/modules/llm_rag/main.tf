@@ -10,7 +10,6 @@ module "iam" {
   kb_model_arn       = data.aws_bedrock_foundation_model.kb.model_arn
   aurora_cluster_arn = var.aurora_cluster_arn
   aurora_secret_arn  = var.aurora_secret_arn
-  sagemaker_name     = var.sagemaker_name
 }
 
 module "knowledge_base" {
