@@ -1,6 +1,6 @@
 module "s3_bucket" {
   source      = "./modules/s3"
-  bucket_name = "${var.kb_s3_bucket_name_prefix}-${local.region_short}-${local.account_id}"
+  bucket_name = var.kb_s3_bucket_name_prefix
 }
 
 module "iam" {

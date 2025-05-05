@@ -1,42 +1,40 @@
-module "elasticache" {
-  source  = "terraform-aws-modules/elasticache/aws"
-  version = "1.6.0"
+module "security_group_redis" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "5.3.0"
 
-  cluster_id               = "${var.project}-${var.environment}-redis"
-  create_cluster           = true
-  create_replication_group = false
+  name        = "${var.elasticache_name}-redis-sg"
+  description = "Security group for ElastiCache Redis cluster"
+  vpc_id      = var.vpc_id
 
-  engine_version = "7.1"
-  node_type      = var.elasticache_redis_instance_type
-  engine         = "redis"
-
-  maintenance_window = "sun:05:00-sun:09:00"
-  apply_immediately  = true
-
-  # Security Group
-  vpc_id             = module.vpc.vpc_id
-  security_group_ids = [module.security_group_redis.security_group_id]
-
-  # Subnet Group
-  subnet_group_name        = module.vpc.database_subnet_group_name
-  subnet_group_description = "${title(module.vpc.database_subnet_group_name)} subnet group"
-  subnet_ids               = module.vpc.private_subnets
-
-  # Parameter Group
-  create_parameter_group      = true
-  parameter_group_name        = "${var.project}-${var.environment}-redis-parameter-group"
-  parameter_group_family      = "redis7"
-  parameter_group_description = "${var.project}-${var.environment}-redis-parameter-group parameter group"
-  parameters = [
+  # ingress
+  ingress_with_cidr_blocks = [
     {
-      name  = "latency-tracking"
-      value = "yes"
-    }
+      from_port   = 6379
+      to_port     = 6379
+      protocol    = "tcp"
+      description = "Redis access from within VPC"
+      cidr_blocks = var.vpc_cidr_block
+    },
   ]
+}
 
-  timeouts = {
-    create = "1h"
-    update = "2h"
-    delete = "1h"
+resource "aws_elasticache_serverless_cache" "redis_serverless_cache" {
+  engine = "redis"
+  name   = var.elasticache_name
+  cache_usage_limits {
+    data_storage {
+      maximum = 5
+      unit    = "GB"
+    }
+    ecpu_per_second {
+      maximum = 5000
+    }
   }
+
+  daily_snapshot_time      = "00:00"
+  description              = "${var.elasticache_name} ElastiCache Redis Serverless"
+  major_engine_version     = "7"
+  snapshot_retention_limit = 1
+  security_group_ids       = [module.security_group_redis.security_group_id]
+  subnet_ids               = var.vpc_subnet_ids
 }

@@ -54,8 +54,8 @@ resource "aws_iam_role_policy" "artifact_s3_access" {
     Version = "2012-10-17"
     Statement = [
       {
-        Action   = ["s3:GetObject"]
-        Effect   = "Allow"
+        Action = ["s3:GetObject"]
+        Effect = "Allow"
         Resource = [
           "${var.lambda_function_s3_bucket_arn}/*",
           "${var.lambda_function_s3_bucket_arn}"
@@ -72,13 +72,13 @@ resource "aws_iam_role_policy" "file_s3_access" {
     Version = "2012-10-17"
     Statement = [
       {
-        Action   = [
+        Action = [
           "s3:PutObject",
           "s3:GetObject",
           "s3:DeleteObject",
           "s3:ListBucket"
         ]
-        Effect   = "Allow"
+        Effect = "Allow"
         Resource = [
           "${var.file_s3_bucket_arn}/*",
           "${var.file_s3_bucket_arn}"
@@ -98,6 +98,30 @@ resource "aws_iam_role_policy" "secretsmanager_access" {
         Action   = ["secretsmanager:GetSecretValue"]
         Effect   = "Allow"
         Resource = var.secret_arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "network_access" {
+  name = "AmazonNetworkAccessPolicyForAPI_${var.lambda_function_name}"
+  role = aws_iam_role.lambda_exec.name
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "ec2:CreateNetworkInterface",
+          "ec2:DescribeVpcs",
+          "ec2:DescribeSubnets",
+          "ec2:DescribeSecurityGroups",
+          "ec2:AttachNetworkInterface",
+          "ec2:CreateNetworkInterfaceAttachment",
+          "ec2:DescribeNetworkInterfaces",
+          "ec2:DeleteNetworkInterface",
+        ]
+        Effect   = "Allow"
+        Resource = "*"
       }
     ]
   })

@@ -31,6 +31,30 @@ variable "aurora_master_username" {
   type        = string
 }
 
+###################################################
+# ElastiCache Variables
+###################################################
+variable "elasticache_name" {
+  description = "The name of the ElastiCache cluster."
+  type        = string
+}
+
+##############################################
+# Secrets Manager Variables
+##############################################
+variable "secret_name" {
+  description = "The name of the secret in AWS Secrets Manager."
+  type        = string
+}
+
+###############################################
+# S3 Bucket Variables
+###############################################
+variable "s3_bucket_handler_name" {
+  description = "The name of the S3 bucket for file storage."
+  type        = string
+}
+
 ################################################
 # Bastion Variables
 ################################################
@@ -71,4 +95,22 @@ variable "kb_model_id" {
 ##########################################
 # Lambda Handler Variables
 ##########################################
+variable "lambda_function_handler_name" {
+  description = "The name of the Lambda function to be created."
+  type        = string
+}
 
+variable "lambda_function_handler_s3_bucket_arn" {
+  description = "The ARN of the S3 bucket where the Lambda function code is stored."
+  type        = string
+}
+
+variable "lambda_function_handler_s3_bucket_name" {
+  description = "The name of the S3 bucket where the Lambda function code is stored."
+  type        = string
+}
+
+variable "lambda_function_handler_zip_key" {
+  description = "The S3 key for the Lambda function code."
+  type        = string
+}

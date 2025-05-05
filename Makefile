@@ -43,8 +43,10 @@ test: install
 package: install $(DIST)
 	$(foreach service,$(SERVICES), \
 		mkdir -p $(DIST)/$(service); \
-		cp -r $(BACKEND)/$(service)/src/* $(DIST)/$(service)/; \
+		cp -r $(BACKEND)/$(service)/* $(DIST)/$(service)/; \
 		$(BACKEND)/$(service)/$(VENV)/bin/pip install -r $(BACKEND)/$(service)/requirements.txt -t $(DIST)/$(service)/; \
+		$(BACKEND)/$(service)/$(VENV)/bin/pip install pydantic-core --platform manylinux2014_x86_64 -t $(DIST)/$(service)/ --implementation cp --python-version 3.13 --only-binary=:all: --upgrade pydantic; \
+		rm -rf $(DIST)/$(service)/$(VENV); \
 		cd $(DIST)/$(service) && zip -r ../$(service).zip . && cd ../../..; \
 		rm -rf $(DIST)/$(service); \
 	)

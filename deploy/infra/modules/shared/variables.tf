@@ -27,3 +27,18 @@ variable "ec2_bastion_ingress_ips" {
   description = "IP addresses for the bastion host ingress rule."
   type        = list(string)
 }
+
+variable "s3_bucket_handler_name" {
+  description = "Name of the S3 bucket for file storage."
+  type        = string
+}
+
+variable "elasticache_name" {
+  description = "Name of the ElastiCache cluster."
+  type        = string
+}
+
+variable "secret_name" {
+  description = "Name of the secret in AWS Secrets Manager."
+  type        = string
+}

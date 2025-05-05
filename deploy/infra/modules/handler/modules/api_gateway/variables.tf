@@ -3,7 +3,7 @@ variable "api_gateway_name" {
   type        = string
 }
 
-variable "lambda_invoke_arn" {
+variable "lambda_function_invoke_arn" {
   description = "The ARN of the Lambda function to be invoked"
   type        = string
 }
