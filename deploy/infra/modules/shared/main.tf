@@ -33,3 +33,26 @@ module "bastion" {
 
   depends_on = [module.vpc, module.aurora]
 }
+
+module "file_bucket" {
+  source = "./modules/s3"
+
+  s3_bucket_name = var.s3_bucket_handler_name
+}
+
+module "elasticache" {
+  source = "./modules/elasticache"
+
+  elasticache_name = var.elasticache_name
+  vpc_id           = module.vpc.vpc_id
+  vpc_cidr_block   = module.vpc.vpc_cidr_block
+  vpc_subnet_ids   = module.vpc.vpc_database_subnets
+
+  depends_on = [module.vpc]
+}
+
+module "secrets_manager" {
+  source = "./modules/secrets_manager"
+
+  secret_name = var.secret_name
+}

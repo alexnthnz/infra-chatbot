@@ -35,14 +35,14 @@ def upload_to_s3(file: UploadFile, folder: str = "uploads", expires_in: int = 36
         # Upload the file to the private bucket
         s3_client.upload_fileobj(
             file.file,  # File object from UploadFile
-            config.S3_BUCKET,
+            config.AWS_S3_BUCKET,
             file_key,
             ExtraArgs={"ContentType": file.content_type},  # Set MIME type
         )
 
         # Generate a presigned URL for temporary access
         file_url = s3_client.generate_presigned_url(
-            "get_object", Params={"Bucket": config.S3_BUCKET, "Key": file_key}, ExpiresIn=expires_in
+            "get_object", Params={"Bucket": config.AWS_S3_BUCKET, "Key": file_key}, ExpiresIn=expires_in
         )
         return file_url
 
@@ -75,7 +75,7 @@ def generate_presigned_url(file_key: str, expires_in: int = 3600) -> str:
     """
     try:
         url = s3_client.generate_presigned_url(
-            "get_object", Params={"Bucket": config.S3_BUCKET, "Key": file_key}, ExpiresIn=expires_in
+            "get_object", Params={"Bucket": config.AWS_S3_BUCKET, "Key": file_key}, ExpiresIn=expires_in
         )
         return url
     except ClientError as e:

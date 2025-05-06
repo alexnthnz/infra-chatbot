@@ -16,6 +16,26 @@ output "vpc_cidr_block" {
   value       = module.vpc.vpc_cidr_block
 }
 
+output "vpc_public_subnet_ids" {
+  description = "The IDs of the public subnets in the VPC"
+  value       = module.vpc.vpc_public_subnets
+}
+
+output "vpc_private_subnet_ids" {
+  description = "The IDs of the private subnets in the VPC"
+  value       = module.vpc.vpc_private_subnets
+}
+
+output "vpc_database_subnet_ids" {
+  description = "The IDs of the database subnets in the VPC"
+  value       = module.vpc.vpc_database_subnets
+}
+
+output "vpc_intra_subnet_ids" {
+  description = "The IDs of the intra subnets in the VPC"
+  value       = module.vpc.vpc_intra_subnets
+}
+
 ##############################################
 # Outputs for the Aurora cluster module
 ##############################################
@@ -76,6 +96,11 @@ output "aurora_cluster_master_username" {
   value       = module.aurora.cluster_master_username
 }
 
+output "aurora_cluster_security_group_id" {
+  description = "The security group ID of the Aurora cluster"
+  value       = module.aurora.cluster_security_group_id
+}
+
 ################################################
 # Outputs for the Bastion host module
 ################################################
@@ -102,4 +127,43 @@ output "bastion_private_key_path" {
 output "bastion_public_key_path" {
   description = "The path to the public key file for reference"
   value       = module.bastion.public_key_path
+}
+
+#############################################
+# Outputs for the S3 bucket module
+#############################################
+output "file_s3_bucket_name" {
+  description = "The name of the S3 bucket"
+  value       = module.file_bucket.s3_bucket_name
+}
+
+output "file_s3_bucket_arn" {
+  description = "The ARN of the S3 bucket"
+  value       = module.file_bucket.s3_bucket_arn
+}
+
+##############################################
+# Outputs for the ElastiCache module
+##############################################
+output "elasticache_arn" {
+  description = "The ARN of the ElastiCache cluster"
+  value       = module.elasticache.elasticache_arn
+}
+
+output "elasticache_endpoint" {
+  description = "The endpoint of the ElastiCache cluster"
+  value       = module.elasticache.elasticache_endpoint
+}
+
+output "elasticache_security_group_id" {
+  description = "The security group ID of the ElastiCache cluster"
+  value       = module.elasticache.elasticache_security_group_id
+}
+
+##############################################
+# Outputs for the Secrets Manager module
+##############################################
+output "secret_arn" {
+  description = "ARN of the Secrets Manager secret"
+  value       = module.secrets_manager.secret_arn
 }

@@ -31,6 +31,30 @@ variable "aurora_master_username" {
   type        = string
 }
 
+###################################################
+# ElastiCache Variables
+###################################################
+variable "elasticache_name" {
+  description = "The name of the ElastiCache cluster."
+  type        = string
+}
+
+##############################################
+# Secrets Manager Variables
+##############################################
+variable "secret_name" {
+  description = "The name of the secret in AWS Secrets Manager."
+  type        = string
+}
+
+###############################################
+# S3 Bucket Variables
+###############################################
+variable "s3_bucket_handler_name" {
+  description = "The name of the S3 bucket for file storage."
+  type        = string
+}
+
 ################################################
 # Bastion Variables
 ################################################
@@ -68,24 +92,25 @@ variable "kb_model_id" {
   type        = string
 }
 
-variable "sagemaker_name" {
-  description = "The name of the SageMaker instance."
+##########################################
+# Lambda Handler Variables
+##########################################
+variable "lambda_function_handler_name" {
+  description = "The name of the Lambda function to be created."
   type        = string
 }
 
-variable "sagemaker_instance_type" {
-  description = "The instance type for the SageMaker model."
+variable "lambda_function_handler_s3_bucket_arn" {
+  description = "The ARN of the S3 bucket where the Lambda function code is stored."
   type        = string
-  default     = "ml.t2.medium"
 }
 
-variable "sagemaker_initial_instance_count" {
-  description = "The initial instance count for the SageMaker model."
-  type        = number
-  default     = 1
+variable "lambda_function_handler_s3_bucket_name" {
+  description = "The name of the S3 bucket where the Lambda function code is stored."
+  type        = string
 }
 
-variable "sagemaker_ecr_image_uri" {
-  description = "The ECR image URI for the SageMaker model."
+variable "lambda_function_handler_zip_key" {
+  description = "The S3 key for the Lambda function code."
   type        = string
 }

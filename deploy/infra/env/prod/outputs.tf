@@ -94,6 +94,26 @@ output "bastion_public_key_path" {
   value       = module.shared.bastion_public_key_path
 }
 
+output "file_bucket_name" {
+  description = "The name of the S3 bucket created"
+  value       = module.shared.file_s3_bucket_name
+}
+
+output "file_bucket_arn" {
+  description = "The ARN of the S3 bucket created"
+  value       = module.shared.file_s3_bucket_arn
+}
+
+output "elasticache_arn" {
+  description = "The ARN of the ElastiCache cluster"
+  value       = module.shared.elasticache_arn
+}
+
+output "elasticache_endpoint" {
+  description = "The endpoint of the ElastiCache cluster"
+  value       = module.shared.elasticache_endpoint
+}
+
 #############################################################################
 # Outputs for the llm_rag module
 #############################################################################

@@ -1,6 +1,6 @@
 module "s3_bucket" {
   source      = "./modules/s3"
-  bucket_name = "${var.kb_s3_bucket_name_prefix}-${local.region_short}-${local.account_id}"
+  bucket_name = var.kb_s3_bucket_name_prefix
 }
 
 module "iam" {
@@ -10,7 +10,6 @@ module "iam" {
   kb_model_arn       = data.aws_bedrock_foundation_model.kb.model_arn
   aurora_cluster_arn = var.aurora_cluster_arn
   aurora_secret_arn  = var.aurora_secret_arn
-  sagemaker_name     = var.sagemaker_name
 }
 
 module "knowledge_base" {

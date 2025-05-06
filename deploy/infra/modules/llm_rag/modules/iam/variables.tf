@@ -20,8 +20,3 @@ variable "s3_arn" {
 variable "kb_model_arn" {
   type = string
 }
-
-variable "sagemaker_name" {
-  description = "The SageMaker name."
-  type        = string
-}
