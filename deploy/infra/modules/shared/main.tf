@@ -56,3 +56,22 @@ module "secrets_manager" {
 
   secret_name = var.secret_name
 }
+
+module "security_group" {
+  source = "./modules/security_group"
+
+  vpc_id                        = module.vpc.vpc_id
+  aurora_security_group_id      = module.aurora.cluster_security_group_id
+  elasticache_security_group_id = module.elasticache.elasticache_security_group_id
+}
+
+module "vpc_endpoint_ssm" {
+  source = "./modules/vpc_endpoint"
+
+  vpc_id         = module.vpc.vpc_id
+  vpc_subnet_ids = module.vpc.vpc_private_subnets
+
+  security_group_ids = [
+    module.security_group.ssm_vpc_endpoint_security_group_id,
+  ]
+}

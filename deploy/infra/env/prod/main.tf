@@ -33,12 +33,15 @@ module "llm_rag" {
 module "handler" {
   source = "../../modules/handler"
 
-  lambda_function_name               = var.lambda_function_handler_name
-  lambda_function_s3_bucket_arn      = var.lambda_function_handler_s3_bucket_arn
-  lambda_function_s3_bucket_name     = var.lambda_function_handler_s3_bucket_name
-  lambda_zip_key                     = var.lambda_function_handler_zip_key
-  lambda_function_subnet_ids         = module.shared.vpc_public_subnet_ids
-  lambda_function_security_group_ids = [module.shared.aurora_cluster_security_group_id, module.shared.elasticache_security_group_id]
+  vpc_id = module.shared.vpc_id
+
+  lambda_function_name           = var.lambda_function_handler_name
+  lambda_function_s3_bucket_arn  = var.lambda_function_handler_s3_bucket_arn
+  lambda_function_s3_bucket_name = var.lambda_function_handler_s3_bucket_name
+  lambda_layer_zip_key           = var.lambda_function_handler_layer_zip_key
+  lambda_zip_key                 = var.lambda_function_handler_zip_key
+  lambda_function_subnet_ids     = module.shared.vpc_private_subnet_ids
+  lambda_security_group_id       = module.shared.lambda_security_group_id
 
   aurora_cluster_arn = module.shared.aurora_cluster_arn
 
