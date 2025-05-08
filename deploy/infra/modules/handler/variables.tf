@@ -1,3 +1,8 @@
+variable "vpc_id" {
+  description = "The ID of the VPC where the Lambda function will be deployed"
+  type        = string
+}
+
 variable "secret_arn" {
   description = "The ARN of the secret in AWS Secrets Manager"
   type        = string
@@ -23,14 +28,19 @@ variable "lambda_zip_key" {
   type        = string
 }
 
+variable "lambda_layer_zip_key" {
+  description = "The S3 key for the Lambda layer zip file"
+  type        = string
+}
+
 variable "lambda_function_subnet_ids" {
   description = "List of subnet IDs for the Lambda function"
   type        = list(string)
 }
 
-variable "lambda_function_security_group_ids" {
-  description = "List of security group IDs for the Lambda function"
-  type        = list(string)
+variable "lambda_security_group_id" {
+  description = "Security group ID for the Lambda function"
+  type        = string
 }
 
 variable "aurora_cluster_arn" {

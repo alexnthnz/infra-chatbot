@@ -114,3 +114,8 @@ variable "lambda_function_handler_zip_key" {
   description = "The S3 key for the Lambda function code."
   type        = string
 }
+
+variable "lambda_function_handler_layer_zip_key" {
+  description = "The S3 key for the Lambda function layer code."
+  type        = string
+}

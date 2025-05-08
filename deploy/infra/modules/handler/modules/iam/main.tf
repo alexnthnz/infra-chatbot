@@ -47,7 +47,7 @@ resource "aws_iam_role_policy" "elasticache_redis_access" {
   })
 }
 
-resource "aws_iam_role_policy" "artifact_s3_access" {
+resource "aws_iam_role_policy" "s3_access" {
   name = "AmazonS3AccessPolicyForAPI_${var.lambda_function_name}"
   role = aws_iam_role.lambda_exec.name
   policy = jsonencode({
@@ -60,17 +60,7 @@ resource "aws_iam_role_policy" "artifact_s3_access" {
           "${var.lambda_function_s3_bucket_arn}/*",
           "${var.lambda_function_s3_bucket_arn}"
         ]
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy" "file_s3_access" {
-  name = "AmazonS3AccessPolicyForAPI_${var.lambda_function_name}"
-  role = aws_iam_role.lambda_exec.name
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
+      },
       {
         Action = [
           "s3:PutObject",
@@ -119,6 +109,33 @@ resource "aws_iam_role_policy" "network_access" {
           "ec2:CreateNetworkInterfaceAttachment",
           "ec2:DescribeNetworkInterfaces",
           "ec2:DeleteNetworkInterface",
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "bedrock_access" {
+  name = "AmazonBedrockAccessPolicyForAPI_${var.lambda_function_name}"
+  role = aws_iam_role.lambda_exec.name
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        "Action" : [
+          "bedrock:ListFoundationModels"
+        ]
+        "Effect" : "Allow"
+        "Resource" : [
+          "*"
+        ]
+      },
+      {
+        Action = [
+          "bedrock:InvokeModel",
+          "bedrock:Converse"
         ]
         Effect   = "Allow"
         Resource = "*"

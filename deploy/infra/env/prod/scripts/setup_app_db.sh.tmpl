@@ -1,0 +1,12 @@
+#!/bin/bash
+set -e
+
+echo "Running database setup..."
+
+export PGPASSWORD='${ password }'
+
+psql -h ${ aurora_endpoint } \
+     -p ${ aurora_port } \
+     -U ${ aurora_username } \
+     -d postgres \
+     -c "CREATE DATABASE llmtoolflow_db;"

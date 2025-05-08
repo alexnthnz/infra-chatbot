@@ -167,3 +167,11 @@ output "secret_arn" {
   description = "ARN of the Secrets Manager secret"
   value       = module.secrets_manager.secret_arn
 }
+
+###################################################
+# Outputs for the Security Group module
+###################################################
+output "lambda_security_group_id" {
+  description = "The ID of the security group"
+  value       = module.security_group.lambda_security_group_id
+}
