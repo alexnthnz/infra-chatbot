@@ -5,7 +5,7 @@ PYTHON = python3
 BACKEND = chatbot
 
 # Service directories
-SERVICES = handler 
+SERVICES = handler_1
 
 # Virtual environment directory
 VENV = venv
@@ -16,7 +16,7 @@ DIST = dist
 # Deployment stage (dev, staging, prod)
 STAGE ?= prod
 
-SERVICE_BUCKET_MAP = handler:llmtoolflow-$(STAGE)-handler-artifact-bucket 
+SERVICE_BUCKET_MAP = handler_1:llmtoolflow-$(STAGE)-handler-artifact-bucket 
 
 # Function to get bucket for a service
 get_bucket = $(word 2,$(subst :, ,$(filter $1:%,$(SERVICE_BUCKET_MAP))))
@@ -39,16 +39,20 @@ install: venv
 test: install
 	$(foreach service,$(SERVICES),test -d $(BACKEND)/$(service)/tests && $(BACKEND)/$(service)/$(VENV)/bin/pytest $(BACKEND)/$(service)/tests || echo "No tests for $(service)";)
 
-# Create ZIP files for all services
 package: install $(DIST)
 	$(foreach service,$(SERVICES), \
+		mkdir -p $(DIST)/$(service)_layer/python; \
 		mkdir -p $(DIST)/$(service); \
 		cp -r $(BACKEND)/$(service)/* $(DIST)/$(service)/; \
-		$(BACKEND)/$(service)/$(VENV)/bin/pip install -r $(BACKEND)/$(service)/requirements.txt -t $(DIST)/$(service)/; \
-		$(BACKEND)/$(service)/$(VENV)/bin/pip install pydantic-core --platform manylinux2014_x86_64 -t $(DIST)/$(service)/ --implementation cp --python-version 3.13 --only-binary=:all: --upgrade pydantic; \
 		rm -rf $(DIST)/$(service)/$(VENV); \
-		cd $(DIST)/$(service) && zip -r ../$(service).zip . && cd ../../..; \
-		rm -rf $(DIST)/$(service); \
+		$(BACKEND)/$(service)/$(VENV)/bin/pip install -r $(BACKEND)/$(service)/requirements.txt -t $(DIST)/$(service)_layer/python/ --no-cache-dir; \
+		$(BACKEND)/$(service)/$(VENV)/bin/pip install pydantic --platform manylinux2014_x86_64 -t $(DIST)/$(service)_layer/python/ --implementation cp --python-version 3.13 --only-binary=:all: --upgrade pydantic; \
+		$(BACKEND)/$(service)/$(VENV)/bin/pip install psycopg2-binary --platform manylinux2014_x86_64 -t $(DIST)/$(service)_layer/python/ --python-version 3.13 --only-binary=:all:; \
+		$(BACKEND)/$(service)/$(VENV)/bin/pip install langchain-community -t $(DIST)/$(service)/ --platform manylinux2014_x86_64 --python-version 3.13 --only-binary=:all:; \
+		$(BACKEND)/$(service)/$(VENV)/bin/pip install "langchain[aws]" -t $(DIST)/$(service)/ --platform manylinux2014_x86_64 --python-version 3.13 --only-binary=:all:; \
+		cd $(DIST)/$(service)_layer && zip -r ../$(service)_layer.zip . && cd ../..; \
+		cd $(DIST)/$(service) && zip -r ../$(service).zip . && cd ../..; \
+		rm -rf $(DIST)/$(service) $(DIST)/$(service)_layer; \
 	)
 
 # Create dist directory
@@ -62,7 +66,10 @@ setup-s3:
 
 # Upload ZIPs to S3
 upload-s3: package
-	$(foreach service,$(SERVICES),aws s3 cp $(DIST)/$(service).zip s3://$(call get_bucket,$(service))/$(service).zip;)
+	$(foreach service,$(SERVICES), \
+		aws s3 cp $(DIST)/$(service).zip s3://$(call get_bucket,$(service))/$(service).zip; \
+		aws s3 cp $(DIST)/$(service)_layer.zip s3://$(call get_bucket,$(service))/$(service)_layer.zip; \
+	)
 
 # Drop S3 buckets for all services
 drop-s3:
