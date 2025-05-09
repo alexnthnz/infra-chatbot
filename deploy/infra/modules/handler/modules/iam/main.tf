@@ -135,7 +135,8 @@ resource "aws_iam_role_policy" "bedrock_access" {
       {
         Action = [
           "bedrock:InvokeModel",
-          "bedrock:Converse"
+          "bedrock:Converse",
+          "bedrock:InvokeModelWithResponseStream"
         ]
         Effect   = "Allow"
         Resource = "*"

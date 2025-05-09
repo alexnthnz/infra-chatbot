@@ -68,6 +68,8 @@ module "security_group" {
 module "vpc_endpoint_ssm" {
   source = "./modules/vpc_endpoint"
 
+  count = 0
+
   vpc_id         = module.vpc.vpc_id
   vpc_subnet_ids = module.vpc.vpc_private_subnets
 
