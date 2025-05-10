@@ -1,4 +1,7 @@
 resource "null_resource" "setup_database" {
+  triggers = {
+    run_once = "true"
+  }
   connection {
     type        = "ssh"
     user        = "ec2-user"
@@ -22,6 +25,10 @@ resource "null_resource" "setup_database" {
       "/tmp/setup_database.sh || { echo 'Database setup failed'; exit 1; }",
       "rm /tmp/setup_database.sh"
     ]
+  }
+
+  lifecycle {
+    ignore_changes = [triggers]
   }
 
   depends_on = [aws_instance.bastion, aws_eip.bastion_eip, null_resource.setup_tools]

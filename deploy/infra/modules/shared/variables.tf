@@ -33,6 +33,12 @@ variable "s3_bucket_handler_name" {
   type        = string
 }
 
+variable "elasticache_enabled" {
+  description = "Enable ElastiCache."
+  type        = bool
+  default     = false
+}
+
 variable "elasticache_name" {
   description = "Name of the ElastiCache cluster."
   type        = string
