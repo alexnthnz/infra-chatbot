@@ -8,6 +8,7 @@ deploy/infra/env/*/*.tfstate
 deploy/infra/env/*/*.tfstate.*
 deploy/infra/env/*/crash.log
 deploy/infra/env/*/terraform.tfvars
+deploy/infra/env/*/terraform.tfvars.*
 deploy/infra/env/*/keys/
 
 deploy/state/.terraform/*
@@ -25,3 +26,4 @@ MODULE.bazel.lock
 .env
 
 dist/
+.image_tag

@@ -54,14 +54,6 @@ resource "aws_iam_role_policy" "s3_access" {
     Version = "2012-10-17"
     Statement = [
       {
-        Action = ["s3:GetObject"]
-        Effect = "Allow"
-        Resource = [
-          "${var.lambda_function_s3_bucket_arn}/*",
-          "${var.lambda_function_s3_bucket_arn}"
-        ]
-      },
-      {
         Action = [
           "s3:PutObject",
           "s3:GetObject",

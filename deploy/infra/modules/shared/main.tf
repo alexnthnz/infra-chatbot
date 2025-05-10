@@ -43,6 +43,8 @@ module "file_bucket" {
 module "elasticache" {
   source = "./modules/elasticache"
 
+  count = var.elasticache_enabled ? 1 : 0
+
   elasticache_name = var.elasticache_name
   vpc_id           = module.vpc.vpc_id
   vpc_cidr_block   = module.vpc.vpc_cidr_block
@@ -62,7 +64,7 @@ module "security_group" {
 
   vpc_id                        = module.vpc.vpc_id
   aurora_security_group_id      = module.aurora.cluster_security_group_id
-  elasticache_security_group_id = module.elasticache.elasticache_security_group_id
+  elasticache_security_group_id = var.elasticache_enabled ? module.elasticache.elasticache_security_group_id : null
 }
 
 module "vpc_endpoint_ssm" {
