@@ -34,6 +34,12 @@ variable "aurora_master_username" {
 ###################################################
 # ElastiCache Variables
 ###################################################
+variable "elasticache_enabled" {
+  description = "Flag to enable or disable ElastiCache."
+  type        = bool
+  default     = false
+}
+
 variable "elasticache_name" {
   description = "The name of the ElastiCache cluster."
   type        = string
@@ -117,5 +123,10 @@ variable "lambda_function_handler_zip_key" {
 
 variable "lambda_function_handler_layer_zip_key" {
   description = "The S3 key for the Lambda function layer code."
+  type        = string
+}
+
+variable "lambda_function_ecr_repository_name" {
+  description = "The name of the ECR repository for the Lambda function."
   type        = string
 }

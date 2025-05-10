@@ -12,7 +12,8 @@ module "shared" {
 
   s3_bucket_handler_name = var.s3_bucket_handler_name
 
-  elasticache_name = var.elasticache_name
+  elasticache_enabled = var.elasticache_enabled
+  elasticache_name    = var.elasticache_name
 
   secret_name = var.secret_name
 }
