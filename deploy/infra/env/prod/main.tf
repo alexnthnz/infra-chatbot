@@ -12,7 +12,8 @@ module "shared" {
 
   s3_bucket_handler_name = var.s3_bucket_handler_name
 
-  elasticache_name = var.elasticache_name
+  elasticache_enabled = var.elasticache_enabled
+  elasticache_name    = var.elasticache_name
 
   secret_name = var.secret_name
 }
@@ -35,13 +36,10 @@ module "handler" {
 
   vpc_id = module.shared.vpc_id
 
-  lambda_function_name           = var.lambda_function_handler_name
-  lambda_function_s3_bucket_arn  = var.lambda_function_handler_s3_bucket_arn
-  lambda_function_s3_bucket_name = var.lambda_function_handler_s3_bucket_name
-  lambda_layer_zip_key           = var.lambda_function_handler_layer_zip_key
-  lambda_zip_key                 = var.lambda_function_handler_zip_key
-  lambda_function_subnet_ids     = module.shared.vpc_private_subnet_ids
-  lambda_security_group_id       = module.shared.lambda_security_group_id
+  lambda_function_ecr_image_uri     = var.lambda_function_ecr_image_uri
+  lambda_function_name              = var.lambda_function_handler_name
+  lambda_function_subnet_ids        = module.shared.vpc_private_subnet_ids
+  lambda_function_security_group_id = module.shared.lambda_security_group_id
 
   aurora_cluster_arn = module.shared.aurora_cluster_arn
 

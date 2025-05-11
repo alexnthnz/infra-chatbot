@@ -2,13 +2,3 @@
 data "aws_caller_identity" "this" {}
 data "aws_partition" "this" {}
 data "aws_region" "this" {}
-
-data "aws_s3_object" "lambda_zip" {
-  bucket = var.lambda_s3_bucket_name
-  key    = var.lambda_zip_key
-}
-
-data "aws_s3_object" "lambda_layer_zip" {
-  bucket = var.lambda_s3_bucket_name
-  key    = var.lambda_layer_zip_key
-}

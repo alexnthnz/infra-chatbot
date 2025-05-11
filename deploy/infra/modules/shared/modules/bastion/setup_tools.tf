@@ -1,4 +1,7 @@
 resource "null_resource" "setup_tools" {
+  triggers = {
+    run_once = "true"
+  }
   connection {
     type        = "ssh"
     user        = "ec2-user"
@@ -17,6 +20,10 @@ resource "null_resource" "setup_tools" {
       "sudo /tmp/install_psql.sh",
       "rm /tmp/install_psql.sh"
     ]
+  }
+
+  lifecycle {
+    ignore_changes = [triggers]
   }
 
   depends_on = [aws_instance.bastion, aws_eip.bastion_eip]

@@ -1,15 +1,5 @@
-variable "lambda_s3_bucket_name" {
-  description = "The name of the S3 bucket to store artifacts"
-  type        = string
-}
-
-variable "lambda_zip_key" {
-  description = "The S3 key for the Lambda zip file"
-  type        = string
-}
-
-variable "lambda_layer_zip_key" {
-  description = "The S3 key for the Lambda layer zip file"
+variable "lambda_function_ecr_image_uri" {
+  description = "The ECR image URI for the Lambda function"
   type        = string
 }
 

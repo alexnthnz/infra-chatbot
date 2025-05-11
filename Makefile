@@ -10,19 +10,65 @@ SERVICES = handler_1
 # Virtual environment directory
 VENV = venv
 
-# Output directory for ZIP files
-DIST = dist
-
 # Deployment stage (dev, staging, prod)
 STAGE ?= prod
 
-SERVICE_BUCKET_MAP = handler_1:llmtoolflow-$(STAGE)-handler-artifact-bucket 
+# Map services to ECR repositories
+SERVICE_ECR_MAP = handler_1:llmtoolflow-$(STAGE)-handler-ecr
 
-# Function to get bucket for a service
-get_bucket = $(word 2,$(subst :, ,$(filter $1:%,$(SERVICE_BUCKET_MAP))))
+# Function to get ECR repository for a service
+get_ecr_repo = $(word 2,$(subst :, ,$(filter $1:%,$(SERVICE_ECR_MAP))))
+
+# AWS region
+AWS_REGION = ap-southeast-2
+
+# AWS account ID
+AWS_ACCOUNT_ID = $(shell aws sts get-caller-identity --query Account --output text)
+
+# ECR repository URI prefix
+ECR_REPO_PREFIX = $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
+
+# Version variables
+MAJOR ?= 0
+MINOR ?= 0
+
+# Compute the image tag once and store it
+compute-image-tag:
+	@chmod +x scripts/compute_tag.sh
+	@scripts/compute_tag.sh $(call get_ecr_repo,handler_1) $(AWS_REGION) $(MAJOR) $(MINOR)
+	@. ./.image_tag && echo "Computed IMAGE_TAG: $$IMAGE_TAG"
+	$(eval IMAGE_TAG := $(shell . ./.image_tag && echo $$IMAGE_TAG))
+	$(eval ECR_IMAGE_URI := $(ECR_REPO_PREFIX)/$(call get_ecr_repo,handler_1):$(IMAGE_TAG))
+
+# terraform.tfvars file location
+TFVARS_FILE = deploy/infra/env/$(STAGE)/terraform.tfvars
 
 # Default target
-all: install test package
+all: install test compute-image-tag build push-ecr update-tfvars
+
+# Print variables for debugging
+print-vars: compute-image-tag
+	@echo "MAJOR: $(MAJOR)"
+	@echo "MINOR: $(MINOR)"
+	@echo "IMAGE_TAG: $(IMAGE_TAG)"
+	@echo "ECR_IMAGE_URI: $(ECR_IMAGE_URI)"
+
+# Print IMAGE_TAG for use in Terraform
+print-IMAGE_TAG: compute-image-tag
+	@echo $(IMAGE_TAG)
+
+# Update terraform.tfvars with the new ECR image URI
+update-tfvars: compute-image-tag
+	@echo "Updating terraform.tfvars with new ECR image URI: $(ECR_IMAGE_URI)"
+	@if [ -f $(TFVARS_FILE) ]; then \
+		if grep -q '^lambda_function_ecr_image_uri' $(TFVARS_FILE); then \
+			sed -i.bak 's|^lambda_function_ecr_image_uri.*|lambda_function_ecr_image_uri = "$(ECR_IMAGE_URI)"|' $(TFVARS_FILE); \
+		else \
+			echo 'lambda_function_ecr_image_uri = "$(ECR_IMAGE_URI)"' >> $(TFVARS_FILE); \
+		fi; \
+	else \
+		echo 'lambda_function_ecr_image_uri = "$(ECR_IMAGE_URI)"' > $(TFVARS_FILE); \
+	fi
 
 # Set up virtual environments for all services
 venv: $(SERVICES:%=$(BACKEND)/%/venv)
@@ -39,44 +85,34 @@ install: venv
 test: install
 	$(foreach service,$(SERVICES),test -d $(BACKEND)/$(service)/tests && $(BACKEND)/$(service)/$(VENV)/bin/pytest $(BACKEND)/$(service)/tests || echo "No tests for $(service)";)
 
-package: install $(DIST)
+# Build Docker images for all services
+build: compute-image-tag
 	$(foreach service,$(SERVICES), \
-		mkdir -p $(DIST)/$(service)_layer/python; \
-		mkdir -p $(DIST)/$(service); \
-		cp -r $(BACKEND)/$(service)/* $(DIST)/$(service)/; \
-		rm -rf $(DIST)/$(service)/$(VENV); \
-		$(BACKEND)/$(service)/$(VENV)/bin/pip install -r $(BACKEND)/$(service)/requirements.txt -t $(DIST)/$(service)_layer/python/ --no-cache-dir; \
-		$(BACKEND)/$(service)/$(VENV)/bin/pip install pydantic --platform manylinux2014_x86_64 -t $(DIST)/$(service)_layer/python/ --implementation cp --python-version 3.13 --only-binary=:all: --upgrade pydantic; \
-		$(BACKEND)/$(service)/$(VENV)/bin/pip install psycopg2-binary --platform manylinux2014_x86_64 -t $(DIST)/$(service)_layer/python/ --python-version 3.13 --only-binary=:all:; \
-		$(BACKEND)/$(service)/$(VENV)/bin/pip install langchain-community -t $(DIST)/$(service)/ --platform manylinux2014_x86_64 --python-version 3.13 --only-binary=:all:; \
-		$(BACKEND)/$(service)/$(VENV)/bin/pip install "langchain[aws]" -t $(DIST)/$(service)/ --platform manylinux2014_x86_64 --python-version 3.13 --only-binary=:all:; \
-		cd $(DIST)/$(service)_layer && zip -r ../$(service)_layer.zip . && cd ../..; \
-		cd $(DIST)/$(service) && zip -r ../$(service).zip . && cd ../..; \
-		rm -rf $(DIST)/$(service) $(DIST)/$(service)_layer; \
+		docker buildx build --platform linux/amd64 --provenance=false -t $(ECR_REPO_PREFIX)/$(call get_ecr_repo,$(service)):$(IMAGE_TAG) $(BACKEND)/$(service); \
 	)
 
-# Create dist directory
-$(DIST):
-	mkdir -p $(DIST)
-
-# Set up S3 buckets for all services
-setup-s3:
-	@chmod +x scripts/setup_s3.sh
-	$(foreach service,$(SERVICES),scripts/setup_s3.sh $(call get_bucket,$(service));)
-
-# Upload ZIPs to S3
-upload-s3: package
+# Push Docker images to ECR
+push-ecr: build
+	@aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(ECR_REPO_PREFIX)
 	$(foreach service,$(SERVICES), \
-		aws s3 cp $(DIST)/$(service).zip s3://$(call get_bucket,$(service))/$(service).zip; \
-		aws s3 cp $(DIST)/$(service)_layer.zip s3://$(call get_bucket,$(service))/$(service)_layer.zip; \
+		docker push $(ECR_REPO_PREFIX)/$(call get_ecr_repo,$(service)):$(IMAGE_TAG); \
+		docker rmi $(ECR_REPO_PREFIX)/$(call get_ecr_repo,$(service)):$(IMAGE_TAG) || true; \
 	)
 
-# Drop S3 buckets for all services
-drop-s3:
-	@chmod +x scripts/drop_s3.sh
-	$(foreach service,$(SERVICES),scripts/drop_s3.sh $(call get_bucket,$(service));)# Clean up
+# Set up ECR repositories for all services
+setup-ecr:
+	@chmod +x scripts/setup_ecr.sh
+	$(foreach service,$(SERVICES),scripts/setup_ecr.sh $(call get_ecr_repo,$(service)) $(AWS_REGION);)
 
+# Drop ECR repositories for all services
+drop-ecr:
+	@chmod +x scripts/drop_ecr.sh
+	$(foreach service,$(SERVICES),scripts/drop_ecr.sh $(call get_ecr_repo,$(service)) $(AWS_REGION);)
+
+# Clean up
 clean:
-	rm -rf $(DIST) $(foreach service,$(SERVICES),$(BACKEND)/$(service)/$(VENV) $(BACKEND)/$(service)/__pycache__ $(BACKEND)/$(service)/src/__pycache__ $(BACKEND)/$(service)/*.pyc $(BACKEND)/$(service)/src/*.pyc)# Phony targets
+	rm -rf $(foreach service,$(SERVICES),$(BACKEND)/$(service)/$(VENV) $(BACKEND)/$(service)/__pycache__ $(BACKEND)/$(service)/src/__pycache__ $(BACKEND)/$(service)/*.pyc $(BACKEND)/$(service)/src/*.pyc)
+	rm -f .image_tag# Phony targets
 
-.PHONY: all venv install test package setup-s3 upload-s3 drop-s3 clean
+# Phony targets
+.PHONY: all venv install test build setup-ecr push-ecr drop-ecr clean print-vars print-IMAGE_TAG update-tfvars compute-image-tag

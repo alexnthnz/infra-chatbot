@@ -13,23 +13,8 @@ variable "lambda_function_name" {
   type        = string
 }
 
-variable "lambda_function_s3_bucket_arn" {
-  description = "The ARN of the S3 bucket where the Lambda function code is stored"
-  type        = string
-}
-
-variable "lambda_function_s3_bucket_name" {
-  description = "The name of the S3 bucket where the Lambda function code is stored"
-  type        = string
-}
-
-variable "lambda_zip_key" {
-  description = "The S3 key for the Lambda zip file"
-  type        = string
-}
-
-variable "lambda_layer_zip_key" {
-  description = "The S3 key for the Lambda layer zip file"
+variable "lambda_function_ecr_image_uri" {
+  description = "The ECR image URI for the Lambda function"
   type        = string
 }
 
@@ -38,7 +23,7 @@ variable "lambda_function_subnet_ids" {
   type        = list(string)
 }
 
-variable "lambda_security_group_id" {
+variable "lambda_function_security_group_id" {
   description = "Security group ID for the Lambda function"
   type        = string
 }

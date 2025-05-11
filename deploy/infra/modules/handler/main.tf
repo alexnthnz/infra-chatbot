@@ -1,8 +1,7 @@
 module "iam" {
   source = "./modules/iam"
 
-  lambda_function_name          = var.lambda_function_name
-  lambda_function_s3_bucket_arn = var.lambda_function_s3_bucket_arn
+  lambda_function_name = var.lambda_function_name
 
   aurora_cluster_arn = var.aurora_cluster_arn
 
@@ -14,12 +13,10 @@ module "iam" {
 module "lambda" {
   source = "./modules/lambda"
 
-  lambda_s3_bucket_name    = var.lambda_function_s3_bucket_name
-  lambda_zip_key           = var.lambda_zip_key
-  lambda_layer_zip_key     = var.lambda_layer_zip_key
-  lambda_role_arn          = module.iam.lambda_role_arn
-  lambda_function_name     = var.lambda_function_name
-  lambda_security_group_id = var.lambda_security_group_id
+  lambda_function_ecr_image_uri = var.lambda_function_ecr_image_uri
+  lambda_role_arn               = module.iam.lambda_role_arn
+  lambda_function_name          = var.lambda_function_name
+  lambda_security_group_id      = var.lambda_function_security_group_id
 
   vpc_id     = var.vpc_id
   subnet_ids = var.lambda_function_subnet_ids
