@@ -115,24 +115,42 @@ output "elasticache_endpoint" {
 }
 
 #############################################################################
-# Outputs for the llm_rag module
+# Outputs for the rag module
 #############################################################################
-output "llm_rag_s3_arn" {
+output "rag_s3_arn" {
   description = "arn of the S3 bucket created"
-  value       = module.llm_rag.s3_arn
+  value       = module.rag.s3_arn
 }
 
-output "llm_rag_s3_bucket_name" {
+output "rag_s3_bucket_name" {
   description = "Name of the S3 bucket created"
-  value       = module.llm_rag.s3_bucket_name
+  value       = module.rag.s3_bucket_name
 }
 
-output "llm_rag_knowledge_base_id" {
+output "rag_knowledge_base_id" {
   description = "The ID of the Bedrock Agent Knowledge Base"
-  value       = module.llm_rag.knowledge_base_id
+  value       = module.rag.knowledge_base_id
 }
 
-output "llm_rag_knowledge_base_arn" {
+output "rag_knowledge_base_arn" {
   description = "The ARN of the Bedrock Agent Knowledge Base"
-  value       = module.llm_rag.knowledge_base_arn
+  value       = module.rag.knowledge_base_arn
+}
+
+#############################################################################
+# Outputs for the llm module
+#############################################################################
+output "sagemaker_model_arn" {
+  description = "ARN of the SageMaker model."
+  value       = module.llm.sagemaker_model_arn
+}
+
+output "sagemaker_endpoint_config_name" {
+  description = "Name of the SageMaker endpoint configuration for the agent model."
+  value       = module.llm.sagemaker_endpoint_config_name
+}
+
+output "sagemaker_endpoint_name" {
+  description = "Name of the SageMaker endpoint for the agent model."
+  value       = module.llm.sagemaker_endpoint_name
 }

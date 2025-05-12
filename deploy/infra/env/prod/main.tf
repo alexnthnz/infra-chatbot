@@ -18,8 +18,20 @@ module "shared" {
   secret_name = var.secret_name
 }
 
-module "llm_rag" {
-  source = "../../modules/llm_rag"
+module "llm" {
+  source = "../../modules/llm"
+
+  sagemaker_name                   = var.sagemaker_name
+  sagemaker_ecr_image_uri          = var.sagemaker_ecr_image_uri
+  sagemaker_initial_instance_count = var.sagemaker_initial_instance_count
+  sagemaker_instance_type          = var.sagemaker_instance_type
+  sagemaker_hf_model_id            = var.sagemaker_hf_model_id
+  sagemaker_hf_access_token        = var.sagemaker_hf_access_token
+  sagemaker_tgi_config             = var.sagemaker_tgi_config
+}
+
+module "rag" {
+  source = "../../modules/rag"
 
   aurora_cluster_arn = module.shared.aurora_cluster_arn
   aurora_secret_arn  = module.shared.aurora_cluster_master_user_secret[0].secret_arn
