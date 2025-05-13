@@ -16,14 +16,14 @@ resource "null_resource" "setup_database" {
       aurora_port     = var.aurora_cluster_port
       aurora_username = var.aurora_cluster_master_username
     })
-    destination = "/tmp/setup_database.sh"
+    destination = "/tmp/setup_bedrock_database.sh"
   }
 
   provisioner "remote-exec" {
     inline = [
-      "chmod +x /tmp/setup_database.sh",
-      "/tmp/setup_database.sh || { echo 'Database setup failed'; exit 1; }",
-      "rm /tmp/setup_database.sh"
+      "chmod +x /tmp/setup_bedrock_database.sh",
+      "/tmp/setup_bedrock_database.sh || { echo 'Database setup failed'; exit 1; }",
+      "rm /tmp/setup_bedrock_database.sh"
     ]
   }
 

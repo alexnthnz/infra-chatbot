@@ -5,6 +5,24 @@ echo "Running database setup..."
 
 export PGPASSWORD='${ password }'
 
+# Check if the database already exists
+DB_EXISTS=$(psql -h ${ aurora_endpoint } \
+                -p ${ aurora_port } \
+                -U ${ aurora_username } \
+                -d postgres \
+                -t -c "SELECT 1 FROM pg_database WHERE datname = 'bedrock_kb';")
+
+if [ -z "$DB_EXISTS" ]; then
+  echo "Database llmtoolflow_db does not exist, creating..."
+  psql -h ${ aurora_endpoint } \
+       -p ${ aurora_port } \
+       -U ${ aurora_username } \
+       -d postgres \
+       -c "CREATE DATABASE bedrock_kb;"
+else
+  echo "Database bedrock_kb already exists, skipping creation."
+fi
+
 psql -h ${ aurora_endpoint } \
      -p ${ aurora_port } \
      -U ${ aurora_username } \
