@@ -114,6 +114,12 @@ variable "lambda_function_ecr_image_uri" {
 ##########################################
 # SageMaker Variables
 ##########################################
+variable "sagemaker_enabled" {
+  description = "Flag to enable or disable SageMaker."
+  type        = bool
+  default     = false
+}
+
 variable "sagemaker_name" {
   description = "The name of the SageMaker model."
   type        = string

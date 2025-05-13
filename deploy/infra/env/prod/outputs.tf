@@ -142,15 +142,15 @@ output "rag_knowledge_base_arn" {
 #############################################################################
 output "sagemaker_model_arn" {
   description = "ARN of the SageMaker model."
-  value       = module.llm.sagemaker_model_arn
+  value       = var.sagemaker_enabled ? module.llm.sagemaker_model_arn : null
 }
 
 output "sagemaker_endpoint_config_name" {
   description = "Name of the SageMaker endpoint configuration for the agent model."
-  value       = module.llm.sagemaker_endpoint_config_name
+  value       = var.sagemaker_enabled ? module.llm.sagemaker_endpoint_config_name : null
 }
 
 output "sagemaker_endpoint_name" {
   description = "Name of the SageMaker endpoint for the agent model."
-  value       = module.llm.sagemaker_endpoint_name
+  value       = var.sagemaker_enabled ? module.llm.sagemaker_endpoint_name : null
 }

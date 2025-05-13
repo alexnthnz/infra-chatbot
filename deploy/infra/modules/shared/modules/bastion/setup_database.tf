@@ -16,14 +16,14 @@ resource "null_resource" "setup_app_db" {
       aurora_port     = var.aurora_cluster_port
       aurora_username = var.aurora_cluster_master_username
     })
-    destination = "/tmp/setup_database.sh"
+    destination = "/tmp/setup_app_database.sh"
   }
 
   provisioner "remote-exec" {
     inline = [
-      "chmod +x /tmp/setup_database.sh",
-      "/tmp/setup_database.sh || { echo 'Database setup failed'; exit 1; }",
-      "rm /tmp/setup_database.sh"
+      "chmod +x /tmp/setup_app_database.sh",
+      "/tmp/setup_app_database.sh || { echo 'Database setup failed'; exit 1; }",
+      "rm /tmp/setup_app_database.sh"
     ]
   }
 
@@ -31,5 +31,5 @@ resource "null_resource" "setup_app_db" {
     ignore_changes = [triggers]
   }
 
-  depends_on = [aws_instance.bastion, aws_eip.bastion_eip, null_resource.setup_tools]
+  depends_on = [aws_instance.bastion, aws_eip.bastion_eip, null_resource.setup_tools, null_resource.setup_database]
 }

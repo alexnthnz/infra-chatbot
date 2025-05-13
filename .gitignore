@@ -10,6 +10,7 @@ deploy/infra/env/*/crash.log
 deploy/infra/env/*/terraform.tfvars
 deploy/infra/env/*/terraform.tfvars.*
 deploy/infra/env/*/keys/
+deploy/infra/env/*/tfplan
 
 deploy/state/.terraform/*
 deploy/state/*.tfstate
