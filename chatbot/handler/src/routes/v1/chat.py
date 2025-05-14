@@ -1,13 +1,14 @@
-from fastapi import Depends, status, UploadFile, File, Form, HTTPException, APIRouter
-from fastapi.responses import JSONResponse
-from typing import Optional
+import logging
 import uuid
 
-from agent_service.client import enhance_prompt
-from auth.dependencies import get_current_user
+from fastapi import Depends, status, UploadFile, File, Form, HTTPException, APIRouter
+from fastapi.responses import StreamingResponse, JSONResponse
+from typing import Optional, AsyncGenerator
+
+from services.agent import Agent
+from services.auth.dependencies import get_current_user
 from config.config import config
 from config.s3 import upload_to_s3, generate_presigned_url
-from core_service.client import generate_response
 from repository.chat import get_chat_repository, ChatRepository
 from repository.message import get_message_repository, MessageRepository
 from repository.file import get_file_repository, FileRepository
@@ -16,6 +17,8 @@ from schemas.requests.chat import ChatCreate, TagCreate
 from schemas.responses.chat import ChatInDB, ChatDetailInDB, MessageInDB, TagInDB
 from schemas.responses.common import CommonResponse
 from database.models import SenderType
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -154,9 +157,9 @@ async def get_chat(
 
 @router.delete("/{chat_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_chat(
-        chat_id: uuid.UUID,
-        current_user=Depends(get_current_user),
-        chat_repo: ChatRepository = Depends(get_chat_repository),
+    chat_id: uuid.UUID,
+    current_user=Depends(get_current_user),
+    chat_repo: ChatRepository = Depends(get_chat_repository),
 ):
     if isinstance(current_user, JSONResponse):
         return current_user
@@ -192,7 +195,9 @@ async def delete_chat(
 
 
 @router.post(
-    "/{chat_id}/messages", response_model=CommonResponse, status_code=status.HTTP_201_CREATED
+    "/{chat_id}/messages",
+    response_model=CommonResponse,
+    status_code=status.HTTP_201_CREATED,
 )
 async def send_message(
     chat_id: uuid.UUID,
@@ -248,16 +253,14 @@ async def send_message(
         # Call Agent and Core Services
         if content or file_id:
             try:
-                enhanced_prompt = await enhance_prompt(content, file_url if file_id else None)
                 message_repo.create_message(
                     chat=db_chat,
                     sender=SenderType.AGENT,
-                    content=enhanced_prompt,
+                    content=content,
                     metadata={"original_content": content},
                 )
-                core_response = await generate_response(enhanced_prompt)
                 message_repo.create_message(
-                    chat=db_chat, sender=SenderType.CORE, content=core_response
+                    chat=db_chat, sender=SenderType.CORE, content=content
                 )
             except HTTPException as e:
                 return JSONResponse(
@@ -288,7 +291,11 @@ async def send_message(
         )
 
 
-@router.post("/{chat_id}/tags", response_model=CommonResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{chat_id}/tags",
+    response_model=CommonResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def add_tag(
     chat_id: uuid.UUID,
     tag: TagCreate,
@@ -381,4 +388,48 @@ async def remove_tag(
                 data=None,
                 error=str(e),
             ).dict(),
+        )
+
+
+@router.post("/messages", status_code=status.HTTP_200_OK, tags=["chat"])
+async def send_message(
+    content: Optional[str] = Form(None, max_length=1000),
+) -> StreamingResponse:
+    """
+    Handle incoming messages and stream the Agent's response.
+
+    Args:
+        content (Optional[str]): The user's message, max 1000 characters.
+
+    Returns:
+        StreamingResponse: The agent's response streamed as Server-Sent Events (SSE).
+    """
+    if not content:
+
+        async def error_stream() -> AsyncGenerator[str, None]:
+            yield f"data: Error: Message content is required\n\n"
+
+        return StreamingResponse(
+            error_stream(),
+            status_code=status.HTTP_400_BAD_REQUEST,
+            media_type="text/event-stream",
+        )
+
+    try:
+        agent = Agent()
+        return StreamingResponse(
+            agent.stream_message(content),
+            status_code=status.HTTP_200_OK,
+            media_type="text/event-stream",
+        )
+    except Exception as e:
+        logger.error(f"Error streaming message: {e}")
+
+        async def error_stream() -> AsyncGenerator[str, None]:
+            yield f"data: Error: Failed to process message: {str(e)}\n\n"
+
+        return StreamingResponse(
+            error_stream(),
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            media_type="text/event-stream",
         )

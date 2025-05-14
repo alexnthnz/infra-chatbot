@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from datetime import datetime
 import bcrypt
 
-from auth import jwt_handler, social_login, dependencies
+from services.auth import jwt_handler, social_login, dependencies
 from config.redis_client import redis_client
 from repository.user import get_user_repository, UserRepository
 from schemas.requests.user import UserCreate, UserLogin
@@ -14,7 +14,9 @@ router = APIRouter()
 
 
 @router.post("/register", response_model=CommonResponse)
-def register(user: UserCreate, user_repo: UserRepository = Depends(get_user_repository)):
+def register(
+    user: UserCreate, user_repo: UserRepository = Depends(get_user_repository)
+):
     db_user = user_repo.get_user_by_email(user.email)
     if db_user:
         return JSONResponse(
@@ -128,7 +130,9 @@ def auth_google():
 
 
 @router.get("/callback/google", response_model=CommonResponse)
-def google_callback(code: str, user_repo: UserRepository = Depends(get_user_repository)):
+def google_callback(
+    code: str, user_repo: UserRepository = Depends(get_user_repository)
+):
     try:
         user_info = social_login.handle_google_callback(code)
     except Exception as e:
