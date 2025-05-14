@@ -1,6 +1,15 @@
 import enum
 import uuid
-from sqlalchemy import Column, String, Boolean, DateTime, Integer, ForeignKey, Enum, JSON
+from sqlalchemy import (
+    Column,
+    String,
+    Boolean,
+    DateTime,
+    Integer,
+    ForeignKey,
+    Enum,
+    JSON,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -31,7 +40,9 @@ class User(Base):
     # Authentication metadata
     last_login_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
     # Account status and security
     is_verified = Column(Boolean, default=False)
@@ -45,12 +56,16 @@ class User(Base):
 class Chat(Base):
     __tablename__ = "chats"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
+    )
     title = Column(String, nullable=True)  # Optional title for the chat
     is_pinned = Column(Boolean, default=False)  # For pinning important chats
     last_read_at = Column(DateTime, nullable=True)  # For read/unread status
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
     # Relationships
     user = relationship("User", back_populates="chats")
@@ -61,13 +76,19 @@ class Chat(Base):
 class Message(Base):
     __tablename__ = "messages"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    chat_id = Column(UUID(as_uuid=True), ForeignKey("chats.id"), nullable=False, index=True)
+    chat_id = Column(
+        UUID(as_uuid=True), ForeignKey("chats.id"), nullable=False, index=True
+    )
     sender = Column(Enum(SenderType), nullable=False)  # Enum for user, agent, or core
     content = Column(String, nullable=True)  # Text content, nullable if only a file
-    file_id = Column(UUID(as_uuid=True), ForeignKey("files.id"), nullable=True, index=True)
+    file_id = Column(
+        UUID(as_uuid=True), ForeignKey("files.id"), nullable=True, index=True
+    )
     message_metadata = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
     # Relationships
     chat = relationship("Chat", back_populates="messages")
@@ -81,13 +102,17 @@ class File(Base):
     file_type = Column(String, nullable=True)  # e.g., "image/jpeg", "application/pdf"
     file_size = Column(Integer, nullable=True)  # Size in bytes
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
 
 class Tag(Base):
     __tablename__ = "tags"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
+    )
     name = Column(String, nullable=False)  # Tag name (e.g., "work", "personal")
 
     # Relationships

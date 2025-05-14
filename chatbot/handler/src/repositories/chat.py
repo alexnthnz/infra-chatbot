@@ -23,7 +23,9 @@ class ChatRepository:
         self.db.refresh(chat)
         return chat
 
-    def get_chats_by_user(self, user: User, limit: int = 50, offset: int = 0) -> List[Chat]:
+    def get_chats_by_user(
+        self, user: User, limit: int = 50, offset: int = 0
+    ) -> List[Chat]:
         """List chats for a user with pagination."""
         return (
             self.db.query(Chat)
@@ -40,11 +42,19 @@ class ChatRepository:
 
     def get_chat_by_id(self, chat_id: uuid.UUID, user: User) -> Chat | None:
         """Retrieve a specific chat by ID, ensuring it belongs to the user."""
-        return self.db.query(Chat).filter(Chat.id == chat_id, Chat.user_id == user.id).first()
+        return (
+            self.db.query(Chat)
+            .filter(Chat.id == chat_id, Chat.user_id == user.id)
+            .first()
+        )
 
     def delete_chat(self, chat_id: uuid.UUID, user: User) -> bool:
         """Delete a chat by ID, ensuring it belongs to the user."""
-        chat = self.db.query(Chat).filter(Chat.id == chat_id, Chat.user_id == user.id).first()
+        chat = (
+            self.db.query(Chat)
+            .filter(Chat.id == chat_id, Chat.user_id == user.id)
+            .first()
+        )
         if not chat:
             return False
         self.db.delete(chat)

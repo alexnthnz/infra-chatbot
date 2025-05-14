@@ -5,7 +5,7 @@ PYTHON = python3
 BACKEND = chatbot
 
 # Service directories
-SERVICES = handler_1
+SERVICES = handler
 
 # Virtual environment directory
 VENV = venv
@@ -32,13 +32,22 @@ ECR_REPO_PREFIX = $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
 MAJOR ?= 0
 MINOR ?= 0
 
-# Compute the image tag once and store it
+REPO_NAME := $(call get_ecr_repo,$(SERVICE))
+IMAGE_TAG := $(shell scripts/compute_tag.sh "$(REPO_NAME)" "$(AWS_REGION)" "$(MAJOR)" "$(MINOR)")
+
 compute-image-tag:
+	@if [ -z "$(SERVICE)" ]; then \
+		echo "Error: SERVICE must be specified (e.g., make compute-image-tag SERVICE=handler_1)" >&2; \
+		exit 1; \
+	fi
+	@if ! echo "$(SERVICES)" | grep -qw "$(SERVICE)"; then \
+		echo "Error: SERVICE '$(SERVICE)' is not in SERVICES: $(SERVICES)" >&2; \
+		exit 1; \
+	fi
 	@chmod +x scripts/compute_tag.sh
-	@scripts/compute_tag.sh $(call get_ecr_repo,handler_1) $(AWS_REGION) $(MAJOR) $(MINOR)
-	@. ./.image_tag && echo "Computed IMAGE_TAG: $$IMAGE_TAG"
-	$(eval IMAGE_TAG := $(shell . ./.image_tag && echo $$IMAGE_TAG))
-	$(eval ECR_IMAGE_URI := $(ECR_REPO_PREFIX)/$(call get_ecr_repo,handler_1):$(IMAGE_TAG))
+	@echo "Computed ECR_IMAGE_URI: $(ECR_REPO_PREFIX)/$(REPO_NAME):$(IMAGE_TAG)"
+	@echo "Computed IMAGE_TAG: $(IMAGE_TAG)" 
+	$(eval ECR_IMAGE_URI := $(ECR_REPO_PREFIX)/$(REPO_NAME):$(IMAGE_TAG))
 
 # terraform.tfvars file location
 TFVARS_FILE = deploy/infra/env/$(STAGE)/terraform.tfvars
@@ -52,10 +61,6 @@ print-vars: compute-image-tag
 	@echo "MINOR: $(MINOR)"
 	@echo "IMAGE_TAG: $(IMAGE_TAG)"
 	@echo "ECR_IMAGE_URI: $(ECR_IMAGE_URI)"
-
-# Print IMAGE_TAG for use in Terraform
-print-IMAGE_TAG: compute-image-tag
-	@echo $(IMAGE_TAG)
 
 # Update terraform.tfvars with the new ECR image URI
 update-tfvars: compute-image-tag
@@ -71,33 +76,72 @@ update-tfvars: compute-image-tag
 	fi
 
 # Set up virtual environments for all services
-venv: $(SERVICES:%=$(BACKEND)/%/venv)
-
-$(BACKEND)/%/venv:
-	$(PYTHON) -m venv $(BACKEND)/$*/$(VENV)
-	$(BACKEND)/$*/$(VENV)/bin/pip install --upgrade pip
+venv:
+	@if [ -z "$(SERVICE)" ]; then \
+		echo "Error: SERVICE must be specified (e.g., make venv SERVICE=handler_1)" >&2; \
+		exit 1; \
+	fi
+	@if ! echo "$(SERVICES)" | grep -qw "$(SERVICE)"; then \
+		echo "Error: SERVICE '$(SERVICE)' is not in SERVICES: $(SERVICES)" >&2; \
+		exit 1; \
+	fi
+	@$(PYTHON) -m venv $(BACKEND)/$(SERVICE)/$(VENV)
+	@$(BACKEND)/$(SERVICE)/$(VENV)/bin/pip install --upgrade pip
 
 # Install dependencies for all services
 install: venv
-	$(foreach service,$(SERVICES),$(BACKEND)/$(service)/$(VENV)/bin/pip install -r $(BACKEND)/$(service)/requirements.txt;)
+	@if [ -z "$(SERVICE)" ]; then \
+		echo "Error: SERVICE must be specified (e.g., make install SERVICE=handler_1)" >&2; \
+		exit 1; \
+	fi
+	@if ! echo "$(SERVICES)" | grep -qw "$(SERVICE)"; then \
+		echo "Error: SERVICE '$(SERVICE)' is not in SERVICES: $(SERVICES)" >&2; \
+		exit 1; \
+	fi
+	@$(BACKEND)/$(SERVICE)/$(VENV)/bin/pip install -r $(BACKEND)/$(SERVICE)/requirements.txt
 
 # Run tests for all services
 test: install
-	$(foreach service,$(SERVICES),test -d $(BACKEND)/$(service)/tests && $(BACKEND)/$(service)/$(VENV)/bin/pytest $(BACKEND)/$(service)/tests || echo "No tests for $(service)";)
+	@if [ -z "$(SERVICE)" ]; then \
+		echo "Error: SERVICE must be specified (e.g., make test SERVICE=handler_1)" >&2; \
+		exit 1; \
+	fi
+	@if ! echo "$(SERVICES)" | grep -qw "$(SERVICE)"; then \
+		echo "Error: SERVICE '$(SERVICE)' is not in SERVICES: $(SERVICES)" >&2; \
+		exit 1; \
+	fi
+	@test -d $(BACKEND)/$(SERVICE)/tests && $(BACKEND)/$(SERVICE)/$(VENV)/bin/pytest $(BACKEND)/$(SERVICE)/tests || echo "No tests for $(SERVICE)"
 
 # Build Docker images for all services
 build: compute-image-tag
-	$(foreach service,$(SERVICES), \
-		docker buildx build --platform linux/amd64 --provenance=false -t $(ECR_REPO_PREFIX)/$(call get_ecr_repo,$(service)):$(IMAGE_TAG) $(BACKEND)/$(service); \
-	)
+	@if [ -z "$(SERVICE)" ]; then \
+		echo "Error: SERVICE must be specified (e.g., make build SERVICE=handler_1)" >&2; \
+		exit 1; \
+	fi
+	@if ! echo "$(SERVICES)" | grep -qw "$(SERVICE)"; then \
+		echo "Error: SERVICE '$(SERVICE)' is not in SERVICES: $(SERVICES)" >&2; \
+		exit 1; \
+	fi
+	@if [ -z "$(ECR_IMAGE_URI)" ]; then \
+		echo "Error: ECR_IMAGE_URI is not set. Run compute-image-tag first." >&2; \
+		exit 1; \
+	fi
+	@docker buildx build --platform linux/amd64 --provenance=false -t $(ECR_IMAGE_URI) $(BACKEND)/$(SERVICE)
 
 # Push Docker images to ECR
 push-ecr: build
 	@aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(ECR_REPO_PREFIX)
-	$(foreach service,$(SERVICES), \
-		docker push $(ECR_REPO_PREFIX)/$(call get_ecr_repo,$(service)):$(IMAGE_TAG); \
-		docker rmi $(ECR_REPO_PREFIX)/$(call get_ecr_repo,$(service)):$(IMAGE_TAG) || true; \
-	)
+	@if [ -z "$(SERVICE)" ]; then \
+		echo "Error: SERVICE must be specified (e.g., make test SERVICE=handler_1)" >&2; \
+		exit 1; \
+	fi
+	@if ! echo "$(SERVICES)" | grep -qw "$(SERVICE)"; then \
+		echo "Error: SERVICE '$(SERVICE)' is not in SERVICES: $(SERVICES)" >&2; \
+		exit 1; \
+	fi
+	@docker push $(ECR_REPO_PREFIX)/$(call get_ecr_repo,$(SERVICE)):$(IMAGE_TAG); 
+	@docker rmi $(ECR_REPO_PREFIX)/$(call get_ecr_repo,$(SERVICE)):$(IMAGE_TAG) || true; 
+	
 
 # Set up ECR repositories for all services
 setup-ecr:
@@ -115,4 +159,4 @@ clean:
 	rm -f .image_tag# Phony targets
 
 # Phony targets
-.PHONY: all venv install test build setup-ecr push-ecr drop-ecr clean print-vars print-IMAGE_TAG update-tfvars compute-image-tag
+.PHONY: all venv install test build setup-ecr push-ecr drop-ecr clean print-vars update-tfvars compute-image-tag

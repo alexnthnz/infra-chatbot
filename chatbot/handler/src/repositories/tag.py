@@ -16,7 +16,9 @@ class TagRepository:
 
     def create_tag(self, user: User, name: str) -> Tag:
         """Create a new tag for the user, or return existing one if it exists."""
-        tag = self.db.query(Tag).filter(Tag.user_id == user.id, Tag.name == name).first()
+        tag = (
+            self.db.query(Tag).filter(Tag.user_id == user.id, Tag.name == name).first()
+        )
         if not tag:
             tag = Tag(id=uuid.uuid4(), user_id=user.id, name=name)
             self.db.add(tag)
@@ -43,4 +45,6 @@ class TagRepository:
 
     def get_tag_by_id(self, tag_id: uuid.UUID, user: User) -> Tag | None:
         """Retrieve a tag by ID, ensuring it belongs to the user."""
-        return self.db.query(Tag).filter(Tag.id == tag_id, Tag.user_id == user.id).first()
+        return (
+            self.db.query(Tag).filter(Tag.id == tag_id, Tag.user_id == user.id).first()
+        )

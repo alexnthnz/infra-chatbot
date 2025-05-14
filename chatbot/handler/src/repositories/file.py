@@ -32,4 +32,8 @@ class FileRepository:
 
     def get_file_by_id(self, file_id: uuid.UUID, user: User) -> File | None:
         """Retrieve a file by ID, ensuring it belongs to the user."""
-        return self.db.query(File).filter(File.id == file_id, File.user_id == user.id).first()
+        return (
+            self.db.query(File)
+            .filter(File.id == file_id, File.user_id == user.id)
+            .first()
+        )
