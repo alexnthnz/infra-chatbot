@@ -9,10 +9,10 @@ from services.agent import Agent
 from services.auth.dependencies import get_current_user
 from config.config import config
 from config.s3 import upload_to_s3, generate_presigned_url
-from repository.chat import get_chat_repository, ChatRepository
-from repository.message import get_message_repository, MessageRepository
-from repository.file import get_file_repository, FileRepository
-from repository.tag import get_tag_repository, TagRepository
+from repositories.chat import get_chat_repository, ChatRepository
+from repositories.message import get_message_repository, MessageRepository
+from repositories.file import get_file_repository, FileRepository
+from repositories.tag import get_tag_repository, TagRepository
 from schemas.requests.chat import ChatCreate, TagCreate
 from schemas.responses.chat import ChatInDB, ChatDetailInDB, MessageInDB, TagInDB
 from schemas.responses.common import CommonResponse
@@ -199,7 +199,7 @@ async def delete_chat(
     response_model=CommonResponse,
     status_code=status.HTTP_201_CREATED,
 )
-async def send_message(
+async def send_message_auth(
     chat_id: uuid.UUID,
     content: Optional[str] = Form(None, max_length=1000),
     file: Optional[UploadFile] = File(None),
@@ -391,45 +391,76 @@ async def remove_tag(
         )
 
 
-@router.post("/messages", status_code=status.HTTP_200_OK, tags=["chat"])
+@router.post("/messages", status_code=status.HTTP_200_OK, tags=["chat"], response_model=None)
 async def send_message(
     content: Optional[str] = Form(None, max_length=1000),
-) -> StreamingResponse:
+    response_type: Optional[str] = Form(None),
+) -> StreamingResponse | JSONResponse:
     """
-    Handle incoming messages and stream the Agent's response.
+    Handle incoming messages and return the Agent's response.
 
     Args:
         content (Optional[str]): The user's message, max 1000 characters.
+        response_type (Optional[str]): Response format, either 'stream' or 'json'.
 
     Returns:
-        StreamingResponse: The agent's response streamed as Server-Sent Events (SSE).
+        StreamingResponse: Agent's response streamed as Server-Sent Events (SSE) if response_type is 'stream'.
+        JSONResponse: Agent's response as JSON if response_type is 'json'.
     """
-    if not content:
-
-        async def error_stream() -> AsyncGenerator[str, None]:
-            yield f"data: Error: Message content is required\n\n"
-
-        return StreamingResponse(
-            error_stream(),
+    if response_type not in ["stream", "json", None]:
+        return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
-            media_type="text/event-stream",
+            content={"error": "Invalid response type. Use 'stream' or 'json'."},
         )
 
-    try:
-        agent = Agent()
-        return StreamingResponse(
-            agent.stream_message(content),
-            status_code=status.HTTP_200_OK,
-            media_type="text/event-stream",
-        )
-    except Exception as e:
-        logger.error(f"Error streaming message: {e}")
+    # Default to 'stream' if response_type is not provided
+    response_type = response_type or "stream"
 
-        async def error_stream() -> AsyncGenerator[str, None]:
-            yield f"data: Error: Failed to process message: {str(e)}\n\n"
+    if not content:
+        if response_type == "json":
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={"error": "Message content is required."},
+            )
+        else:
+            async def error_stream() -> AsyncGenerator[str, None]:
+                yield "data: Error: Message content is required\n\n"
 
-        return StreamingResponse(
-            error_stream(),
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            media_type="text/event-stream",
-        )
+            return StreamingResponse(
+                error_stream(),
+                status_code=status.HTTP_400_BAD_REQUEST,
+                media_type="text/event-stream",
+            )
+
+    agent = Agent()  # Initialize agent
+
+    if response_type == "json":
+        try:
+            response = await agent.get_message(content)  # Await async get_message
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content={"message": response},
+            )
+        except Exception as e:
+            logger.error(f"Error processing message: {e}")
+            return JSONResponse(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                content={"error": f"Failed to process message: {str(e)}"},
+            )
+    else:
+        try:
+            return StreamingResponse(
+                agent.stream_message(content),
+                status_code=status.HTTP_200_OK,
+                media_type="text/event-stream",
+            )
+        except Exception as e:
+            logger.error(f"Error streaming message: {e}")
+            async def error_stream() -> AsyncGenerator[str, None]:
+                yield f"data: Error: Failed to process message: {str(e)}\n\n"
+
+            return StreamingResponse(
+                error_stream(),
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                media_type="text/event-stream",
+            )
