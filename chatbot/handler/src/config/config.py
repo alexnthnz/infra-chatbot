@@ -67,11 +67,167 @@ class AppConfig:
             raise
 
     @property
-    def LANGSMITH_API_KEY(self):
+    def TAVILY_API_KEY(self):
         try:
             resp = self._client.get_secret_value(SecretId=self._secret_arn)
             secret = json.loads(resp["SecretString"])
-            return secret["LANGSMITH_API_KEY"]
+            return secret["TAVILY_API_KEY"]
+        except ClientError as e:
+            logger.error(f"Secrets Manager error: {e}")
+            raise
+        except (json.JSONDecodeError, KeyError) as e:
+            logger.error(f"Invalid secret: {e}")
+            raise
+
+    @property
+    def JWT_ACCESS_SECRET(self):
+        try:
+            resp = self._client.get_secret_value(SecretId=self._secret_arn)
+            secret = json.loads(resp["SecretString"])
+            return secret["JWT_ACCESS_SECRET"]
+        except ClientError as e:
+            logger.error(f"Secrets Manager error: {e}")
+            raise
+        except (json.JSONDecodeError, KeyError) as e:
+            logger.error(f"Invalid secret: {e}")
+            raise
+
+    @property
+    def JWT_REFRESH_SECRET(self):
+        try:
+            resp = self._client.get_secret_value(SecretId=self._secret_arn)
+            secret = json.loads(resp["SecretString"])
+            return secret["JWT_REFRESH_SECRET"]
+        except ClientError as e:
+            logger.error(f"Secrets Manager error: {e}")
+            raise
+        except (json.JSONDecodeError, KeyError) as e:
+            logger.error(f"Invalid secret: {e}")
+            raise
+
+    @property
+    def JWT_ALGORITHM(self):
+        try:
+            resp = self._client.get_secret_value(SecretId=self._secret_arn)
+            secret = json.loads(resp["SecretString"])
+            return secret["JWT_ALGORITHM"]
+        except ClientError as e:
+            logger.error(f"Secrets Manager error: {e}")
+            raise
+        except (json.JSONDecodeError, KeyError) as e:
+            logger.error(f"Invalid secret: {e}")
+            raise
+
+    @property
+    def JWT_AUDIENCE(self):
+        try:
+            resp = self._client.get_secret_value(SecretId=self._secret_arn)
+            secret = json.loads(resp["SecretString"])
+            return secret["JWT_AUDIENCE"]
+        except ClientError as e:
+            logger.error(f"Secrets Manager error: {e}")
+            raise
+        except (json.JSONDecodeError, KeyError) as e:
+            logger.error(f"Invalid secret: {e}")
+            raise
+
+    @property
+    def JWT_ISSUER(self):
+        try:
+            resp = self._client.get_secret_value(SecretId=self._secret_arn)
+            secret = json.loads(resp["SecretString"])
+            return secret["JWT_ISSUER"]
+        except ClientError as e:
+            logger.error(f"Secrets Manager error: {e}")
+            raise
+        except (json.JSONDecodeError, KeyError) as e:
+            logger.error(f"Invalid secret: {e}")
+            raise
+
+    @property
+    def REDIS_HOST(self):
+        try:
+            resp = self._client.get_secret_value(SecretId=self._secret_arn)
+            secret = json.loads(resp["SecretString"])
+            return secret["REDIS_HOST"]
+        except ClientError as e:
+            logger.error(f"Secrets Manager error: {e}")
+            raise
+        except (json.JSONDecodeError, KeyError) as e:
+            logger.error(f"Invalid secret: {e}")
+            raise
+
+    @property
+    def REDIS_PORT(self):
+        try:
+            resp = self._client.get_secret_value(SecretId=self._secret_arn)
+            secret = json.loads(resp["SecretString"])
+            return secret["REDIS_PORT"]
+        except ClientError as e:
+            logger.error(f"Secrets Manager error: {e}")
+            raise
+        except (json.JSONDecodeError, KeyError) as e:
+            logger.error(f"Invalid secret: {e}")
+            raise
+
+    @property
+    def REDIS_DB(self):
+        try:
+            resp = self._client.get_secret_value(SecretId=self._secret_arn)
+            secret = json.loads(resp["SecretString"])
+            return secret["REDIS_DB"]
+        except ClientError as e:
+            logger.error(f"Secrets Manager error: {e}")
+            raise
+        except (json.JSONDecodeError, KeyError) as e:
+            logger.error(f"Invalid secret: {e}")
+            raise
+
+    @property
+    def AWS_S3_BUCKET(self):
+        try:
+            resp = self._client.get_secret_value(SecretId=self._secret_arn)
+            secret = json.loads(resp["SecretString"])
+            return secret["AWS_S3_BUCKET"]
+        except ClientError as e:
+            logger.error(f"Secrets Manager error: {e}")
+            raise
+        except (json.JSONDecodeError, KeyError) as e:
+            logger.error(f"Invalid secret: {e}")
+            raise
+
+    @property
+    def GOOGLE_CLIENT_ID(self):
+        try:
+            resp = self._client.get_secret_value(SecretId=self._secret_arn)
+            secret = json.loads(resp["SecretString"])
+            return secret["GOOGLE_CLIENT_ID"]
+        except ClientError as e:
+            logger.error(f"Secrets Manager error: {e}")
+            raise
+        except (json.JSONDecodeError, KeyError) as e:
+            logger.error(f"Invalid secret: {e}")
+            raise
+
+    @property
+    def GOOGLE_CLIENT_SECRET(self):
+        try:
+            resp = self._client.get_secret_value(SecretId=self._secret_arn)
+            secret = json.loads(resp["SecretString"])
+            return secret["GOOGLE_CLIENT_SECRET"]
+        except ClientError as e:
+            logger.error(f"Secrets Manager error: {e}")
+            raise
+        except (json.JSONDecodeError, KeyError) as e:
+            logger.error(f"Invalid secret: {e}")
+            raise
+
+    @property
+    def GOOGLE_REDIRECT_URI(self):
+        try:
+            resp = self._client.get_secret_value(SecretId=self._secret_arn)
+            secret = json.loads(resp["SecretString"])
+            return secret["GOOGLE_REDIRECT_URI"]
         except ClientError as e:
             logger.error(f"Secrets Manager error: {e}")
             raise

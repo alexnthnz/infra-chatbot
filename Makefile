@@ -14,7 +14,7 @@ VENV = venv
 STAGE ?= prod
 
 # Map services to ECR repositories
-SERVICE_ECR_MAP = handler_1:llmtoolflow-$(STAGE)-handler-ecr
+SERVICE_ECR_MAP = handler:llmtoolflow-$(STAGE)-handler-ecr
 
 # Function to get ECR repository for a service
 get_ecr_repo = $(word 2,$(subst :, ,$(filter $1:%,$(SERVICE_ECR_MAP))))
@@ -32,22 +32,26 @@ ECR_REPO_PREFIX = $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
 MAJOR ?= 0
 MINOR ?= 0
 
-REPO_NAME := $(call get_ecr_repo,$(SERVICE))
-IMAGE_TAG := $(shell scripts/compute_tag.sh "$(REPO_NAME)" "$(AWS_REGION)" "$(MAJOR)" "$(MINOR)")
+# Validate AWS CLI configuration
+validate-aws:
+	@if ! aws sts get-caller-identity >/dev/null 2>&1; then echo "Error: AWS CLI not configured" >&2; exit 1; fi
 
-compute-image-tag:
+compute-image-tag: validate-aws
 	@if [ -z "$(SERVICE)" ]; then \
-		echo "Error: SERVICE must be specified (e.g., make compute-image-tag SERVICE=handler_1)" >&2; \
+		echo "Error: SERVICE must be specified (e.g., make compute-image-tag SERVICE=handler)" >&2; \
 		exit 1; \
 	fi
 	@if ! echo "$(SERVICES)" | grep -qw "$(SERVICE)"; then \
 		echo "Error: SERVICE '$(SERVICE)' is not in SERVICES: $(SERVICES)" >&2; \
 		exit 1; \
 	fi
+	@if [ ! -f scripts/compute_tag.sh ]; then echo "Error: scripts/compute_tag.sh not found" >&2; exit 1; fi
 	@chmod +x scripts/compute_tag.sh
-	@echo "Computed ECR_IMAGE_URI: $(ECR_REPO_PREFIX)/$(REPO_NAME):$(IMAGE_TAG)"
-	@echo "Computed IMAGE_TAG: $(IMAGE_TAG)" 
+	$(eval REPO_NAME := $(call get_ecr_repo,$(SERVICE)))
+	$(eval IMAGE_TAG := $(shell scripts/compute_tag.sh "$(REPO_NAME)" "$(AWS_REGION)" "$(MAJOR)" "$(MINOR)"))
 	$(eval ECR_IMAGE_URI := $(ECR_REPO_PREFIX)/$(REPO_NAME):$(IMAGE_TAG))
+	@echo "Computed ECR_IMAGE_URI: $(ECR_IMAGE_URI)"
+	@echo "Computed IMAGE_TAG: $(IMAGE_TAG)"
 
 # terraform.tfvars file location
 TFVARS_FILE = deploy/infra/env/$(STAGE)/terraform.tfvars
@@ -98,6 +102,7 @@ install: venv
 		echo "Error: SERVICE '$(SERVICE)' is not in SERVICES: $(SERVICES)" >&2; \
 		exit 1; \
 	fi
+	@if [ ! -f $(BACKEND)/$(SERVICE)/requirements.txt ]; then echo "Error: requirements.txt not found for $(SERVICE)" >&2; exit 1; fi
 	@$(BACKEND)/$(SERVICE)/$(VENV)/bin/pip install -r $(BACKEND)/$(SERVICE)/requirements.txt
 
 # Run tests for all services
@@ -130,7 +135,6 @@ build: compute-image-tag
 
 # Push Docker images to ECR
 push-ecr: build
-	@aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(ECR_REPO_PREFIX)
 	@if [ -z "$(SERVICE)" ]; then \
 		echo "Error: SERVICE must be specified (e.g., make test SERVICE=handler_1)" >&2; \
 		exit 1; \
@@ -139,17 +143,18 @@ push-ecr: build
 		echo "Error: SERVICE '$(SERVICE)' is not in SERVICES: $(SERVICES)" >&2; \
 		exit 1; \
 	fi
+	@aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(ECR_REPO_PREFIX)
 	@docker push $(ECR_REPO_PREFIX)/$(call get_ecr_repo,$(SERVICE)):$(IMAGE_TAG); 
 	@docker rmi $(ECR_REPO_PREFIX)/$(call get_ecr_repo,$(SERVICE)):$(IMAGE_TAG) || true; 
 	
 
 # Set up ECR repositories for all services
-setup-ecr:
+setup-ecr: validate-aws
 	@chmod +x scripts/setup_ecr.sh
 	$(foreach service,$(SERVICES),scripts/setup_ecr.sh $(call get_ecr_repo,$(service)) $(AWS_REGION);)
 
 # Drop ECR repositories for all services
-drop-ecr:
+drop-ecr: validate-aws
 	@chmod +x scripts/drop_ecr.sh
 	$(foreach service,$(SERVICES),scripts/drop_ecr.sh $(call get_ecr_repo,$(service)) $(AWS_REGION);)
 
@@ -158,5 +163,21 @@ clean:
 	rm -rf $(foreach service,$(SERVICES),$(BACKEND)/$(service)/$(VENV) $(BACKEND)/$(service)/__pycache__ $(BACKEND)/$(service)/src/__pycache__ $(BACKEND)/$(service)/*.pyc $(BACKEND)/$(service)/src/*.pyc)
 	rm -f .image_tag# Phony targets
 
+help:
+	@echo "Available targets:"
+	@echo "  all                Run full pipeline (install, test, build, push, update tfvars)"
+	@echo "  venv               Create virtual environment for a service"
+	@echo "  install            Install dependencies for a service"
+	@echo "  test               Run tests for a service"
+	@echo "  build              Build Docker image for a service"
+	@echo "  push-ecr           Push Docker image to ECR"
+	@echo "  setup-ecr          Create ECR repositories"
+	@echo "  drop-ecr           Delete ECR repositories"
+	@echo "  clean              Remove virtual environments and cache files"
+	@echo "  print-vars         Print computed variables"
+	@echo "  update-tfvars      Update terraform.tfvars with ECR image URI"
+	@echo "  compute-image-tag  Compute Docker image tag and ECR URI"
+	@echo "Usage: make <target> SERVICE=<service> [STAGE=<stage>] [MAJOR=<major>] [MINOR=<minor>]"
+
 # Phony targets
-.PHONY: all venv install test build setup-ecr push-ecr drop-ecr clean print-vars update-tfvars compute-image-tag
+.PHONY: all venv install test build setup-ecr push-ecr drop-ecr clean print-vars update-tfvars compute-image-tag help

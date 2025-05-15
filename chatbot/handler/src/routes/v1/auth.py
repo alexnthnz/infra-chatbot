@@ -5,7 +5,7 @@ import bcrypt
 
 from services.auth import jwt_handler, social_login, dependencies
 from config.redis_client import redis_client
-from repository.user import get_user_repository, UserRepository
+from repositories.user import get_user_repository, UserRepository
 from schemas.requests.user import UserCreate, UserLogin
 from schemas.responses.common import CommonResponse
 from schemas.responses.user import Token, UserInDB
