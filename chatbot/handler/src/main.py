@@ -52,3 +52,10 @@ def health_check():
             "tables": database.list_tables(),
         },
     }
+
+
+@app.get("/migrate")
+def migrate():
+    """Run migrations."""
+    database.migrate_db()
+    return {"status": "ok", "message": "Migrations applied."}

@@ -48,3 +48,13 @@ variable "aurora_secret_arn" {
   description = "The ARN of the Aurora secret"
   type        = string
 }
+
+variable "elasticache_enabled" {
+  description = "Flag to enable or disable ElastiCache"
+  type        = bool
+}
+
+variable "elasticache_security_group_id" {
+  description = "Security group ID for the ElastiCache cluster"
+  type        = string
+}

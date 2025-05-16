@@ -48,6 +48,16 @@ resource "aws_security_group_rule" "aurora_ingress" {
   source_security_group_id = aws_security_group.bastion.id
 }
 
+resource "aws_security_group_rule" "elasticache_ingress" {
+  count                    = var.elasticache_enabled ? 1 : 0
+  type                     = "ingress"
+  from_port                = 6379
+  to_port                  = 6379
+  protocol                 = "tcp"
+  security_group_id        = var.elasticache_security_group_id
+  source_security_group_id = aws_security_group.bastion.id
+}
+
 resource "aws_instance" "bastion" {
   ami                         = data.aws_ami.amazon_linux.id
   instance_type               = "t3.micro"

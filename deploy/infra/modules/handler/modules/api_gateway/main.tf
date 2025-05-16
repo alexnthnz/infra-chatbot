@@ -1,6 +1,6 @@
 resource "aws_apigatewayv2_api" "http_api" {
-  name                     = var.api_gateway_name
-  protocol_type            = "HTTP"
+  name                       = var.api_gateway_name
+  protocol_type              = "HTTP"
   route_selection_expression = "$request.method $request.path"
 
   cors_configuration {
@@ -14,18 +14,18 @@ resource "aws_apigatewayv2_api" "http_api" {
 resource "aws_lambda_permission" "api_gateway" {
   statement_id  = "AllowInvokeFromAPIGW"
   action        = "lambda:InvokeFunction"
-  function_name = var.lambda_function_name 
+  function_name = var.lambda_function_name
   principal     = "apigateway.amazonaws.com"
   # Lock it down to your stage:
-  source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/*/*"
+  source_arn = "${aws_apigatewayv2_api.http_api.execution_arn}/*/*"
 }
 
 resource "aws_apigatewayv2_integration" "proxy" {
-  api_id                      = aws_apigatewayv2_api.http_api.id
-  integration_type            = "AWS_PROXY"
-  integration_uri             = var.lambda_function_invoke_arn 
-  integration_method          = "POST"
-  payload_format_version      = "2.0"
+  api_id                 = aws_apigatewayv2_api.http_api.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = var.lambda_function_invoke_arn
+  integration_method     = "POST"
+  payload_format_version = "2.0"
 }
 
 resource "aws_apigatewayv2_route" "default" {
@@ -47,18 +47,18 @@ resource "aws_apigatewayv2_stage" "default" {
   access_log_settings {
     destination_arn = aws_cloudwatch_log_group.api_gw.arn
     format = jsonencode({
-      requestId                = "$context.requestId"
-      routeKey                 = "$context.routeKey"
-      status                   = "$context.status"
-      responseLatency          = "$context.responseLatency"
-      integrationErrorMessage  = "$context.integrationErrorMessage"
+      requestId               = "$context.requestId"
+      routeKey                = "$context.routeKey"
+      status                  = "$context.status"
+      responseLatency         = "$context.responseLatency"
+      integrationErrorMessage = "$context.integrationErrorMessage"
     })
   }
 
   default_route_settings {
-    logging_level       = "INFO"
-    data_trace_enabled  = true
-    throttling_burst_limit   = 2000
-    throttling_rate_limit    = 1000
+    logging_level          = "INFO"
+    data_trace_enabled     = true
+    throttling_burst_limit = 2000
+    throttling_rate_limit  = 1000
   }
 }
