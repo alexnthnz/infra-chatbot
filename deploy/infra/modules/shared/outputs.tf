@@ -147,17 +147,17 @@ output "file_s3_bucket_arn" {
 ##############################################
 output "elasticache_arn" {
   description = "The ARN of the ElastiCache cluster"
-  value       = var.elasticache_enabled ? module.elasticache.elasticache_arn : null
+  value       = var.elasticache_enabled ? module.elasticache[0].elasticache_arn : null
 }
 
 output "elasticache_endpoint" {
   description = "The endpoint of the ElastiCache cluster"
-  value       = var.elasticache_enabled ? module.elasticache.elasticache_endpoint : null
+  value       = var.elasticache_enabled ? module.elasticache[0].elasticache_endpoint : null
 }
 
 output "elasticache_security_group_id" {
   description = "The security group ID of the ElastiCache cluster"
-  value       = var.elasticache_enabled ? module.elasticache.elasticache_security_group_id : null
+  value       = var.elasticache_enabled ? module.elasticache[0].elasticache_security_group_id : null
 }
 
 ##############################################

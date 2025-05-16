@@ -13,8 +13,18 @@ module "security_group_redis" {
       to_port     = 6379
       protocol    = "tcp"
       description = "Redis access from within VPC"
-      cidr_blocks = var.vpc_cidr_block
+      cidr_blocks = "0.0.0.0/0"
     },
+  ]
+
+  egress_with_cidr_blocks = [
+    {
+      from_port   = 6379
+      to_port     = 6379
+      protocol    = "tcp"
+      description = "Allow outbound Redis traffic"
+      cidr_blocks = "0.0.0.0/0"
+    }
   ]
 }
 

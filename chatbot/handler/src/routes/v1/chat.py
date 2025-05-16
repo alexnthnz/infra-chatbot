@@ -5,7 +5,7 @@ from fastapi import Depends, status, UploadFile, File, Form, HTTPException, APIR
 from fastapi.responses import StreamingResponse, JSONResponse
 from typing import Optional, AsyncGenerator
 
-from services.agent import Agent
+from services.agent.graph import Graph
 from services.auth.dependencies import get_current_user
 from config.config import config
 from config.s3 import upload_to_s3, generate_presigned_url
@@ -391,10 +391,14 @@ async def remove_tag(
         )
 
 
-@router.post("/messages", status_code=status.HTTP_200_OK, tags=["chat"], response_model=None)
+@router.post(
+    "/messages", status_code=status.HTTP_200_OK, tags=["chat"], response_model=None
+)
 async def send_message(
     content: Optional[str] = Form(None, max_length=1000),
     response_type: Optional[str] = Form(None),
+    is_new_chat: Optional[bool] = Form(None),
+    session_id: Optional[str] = Form(None),
 ) -> StreamingResponse | JSONResponse:
     """
     Handle incoming messages and return the Agent's response.
@@ -402,7 +406,8 @@ async def send_message(
     Args:
         content (Optional[str]): The user's message, max 1000 characters.
         response_type (Optional[str]): Response format, either 'stream' or 'json'.
-
+        is_new_chat (Optional[bool]): The new chat flag.
+        session_id
     Returns:
         StreamingResponse: Agent's response streamed as Server-Sent Events (SSE) if response_type is 'stream'.
         JSONResponse: Agent's response as JSON if response_type is 'json'.
@@ -412,6 +417,23 @@ async def send_message(
             status_code=status.HTTP_400_BAD_REQUEST,
             content={"error": "Invalid response type. Use 'stream' or 'json'."},
         )
+
+    if is_new_chat not in [1, 0, "1", "0", "True", "False", "true", "false"]:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": "Invalid is_new_chat value. Use True or False."},
+        )
+
+    if is_new_chat is False and not session_id:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": "session_id is required for existing chats."},
+        )
+
+    if is_new_chat in [1, "1", "True", True]:
+        is_new_chat = True
+    elif is_new_chat in [0, "0", "False", False]:
+        is_new_chat = False
 
     # Default to 'stream' if response_type is not provided
     response_type = response_type or "stream"
@@ -423,6 +445,7 @@ async def send_message(
                 content={"error": "Message content is required."},
             )
         else:
+
             async def error_stream() -> AsyncGenerator[str, None]:
                 yield "data: Error: Message content is required\n\n"
 
@@ -432,14 +455,18 @@ async def send_message(
                 media_type="text/event-stream",
             )
 
-    agent = Agent()  # Initialize agent
+    if is_new_chat is True:
+        # Initialize a new chat session
+        session_id = str(uuid.uuid4())
+
+    agent = Graph(session_id=session_id)
 
     if response_type == "json":
         try:
             response = await agent.get_message(content)  # Await async get_message
             return JSONResponse(
                 status_code=status.HTTP_200_OK,
-                content={"message": response},
+                content={"message": response, "session_id": session_id},
             )
         except Exception as e:
             logger.error(f"Error processing message: {e}")
@@ -456,6 +483,7 @@ async def send_message(
             )
         except Exception as e:
             logger.error(f"Error streaming message: {e}")
+
             async def error_stream() -> AsyncGenerator[str, None]:
                 yield f"data: Error: Failed to process message: {str(e)}\n\n"
 

@@ -1,5 +1,7 @@
 import logging
 
+import psycopg
+from langchain_postgres import PostgresChatMessageHistory
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.sql import text
 from sqlalchemy.ext.declarative import declarative_base
@@ -11,7 +13,8 @@ from config.config import config
 logger = logging.getLogger(__name__)
 
 DATABASE_URL = config.DATABASE_URL
-engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+engine = create_engine("postgresql+psycopg://" + DATABASE_URL, echo=True, future=True)
+sync_connection = psycopg.connect(conninfo="postgresql://" + DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -52,6 +55,7 @@ def migrate_db():
         from database import models
 
         Base.metadata.create_all(bind=engine)
+        PostgresChatMessageHistory.create_tables(sync_connection, "chat_history")
         logger.info("Database migrations applied successfully")
         return {"status": "success", "detail": "Migrations applied"}
     except Exception as e:
