@@ -3,7 +3,7 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from database.database import get_db
-from database.models import Tag, ChatTag, User
+from database.models import Tag, ChatTag
 
 
 def get_tag_repository(db: Session = Depends(get_db)):
@@ -14,13 +14,11 @@ class TagRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def create_tag(self, user: User, name: str) -> Tag:
+    def create_tag(self, name: str) -> Tag:
         """Create a new tag for the user, or return existing one if it exists."""
-        tag = (
-            self.db.query(Tag).filter(Tag.user_id == user.id, Tag.name == name).first()
-        )
+        tag = self.db.query(Tag).filter(Tag.name == name).first()
         if not tag:
-            tag = Tag(id=uuid.uuid4(), user_id=user.id, name=name)
+            tag = Tag(id=uuid.uuid4(), name=name)
             self.db.add(tag)
             self.db.commit()
             self.db.refresh(tag)
@@ -43,8 +41,6 @@ class TagRepository:
             self.db.delete(chat_tag)
             self.db.commit()
 
-    def get_tag_by_id(self, tag_id: uuid.UUID, user: User) -> Tag | None:
+    def get_tag_by_id(self, tag_id: uuid.UUID) -> Tag | None:
         """Retrieve a tag by ID, ensuring it belongs to the user."""
-        return (
-            self.db.query(Tag).filter(Tag.id == tag_id, Tag.user_id == user.id).first()
-        )
+        return self.db.query(Tag).filter(Tag.id == tag_id).first()

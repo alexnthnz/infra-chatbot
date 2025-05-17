@@ -6,7 +6,6 @@ from enum import Enum
 class SenderType(str, Enum):
     USER = "user"
     AGENT = "agent"
-    CORE = "core"
 
 
 class ChatBase(BaseModel):

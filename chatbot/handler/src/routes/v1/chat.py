@@ -6,7 +6,6 @@ from fastapi.responses import StreamingResponse, JSONResponse
 from typing import Optional, AsyncGenerator
 
 from services.agent.graph import Graph
-from services.auth.dependencies import get_current_user
 from config.config import config
 from config.s3 import upload_to_s3, generate_presigned_url
 from repositories.chat import get_chat_repository, ChatRepository
@@ -26,11 +25,10 @@ router = APIRouter()
 @router.post("/", response_model=CommonResponse, status_code=status.HTTP_201_CREATED)
 async def create_chat(
     chat: ChatCreate,
-    current_user=Depends(get_current_user),
     chat_repo: ChatRepository = Depends(get_chat_repository),
 ):
     try:
-        db_chat = chat_repo.create_chat(current_user, title=chat.title)
+        db_chat = chat_repo.create_chat(title=chat.title)
         return CommonResponse(
             message="Chat created successfully",
             status_code=status.HTTP_201_CREATED,
@@ -51,15 +49,14 @@ async def create_chat(
 
 @router.get("/", response_model=CommonResponse)
 async def list_chats(
-    current_user=Depends(get_current_user),
     chat_repo: ChatRepository = Depends(get_chat_repository),
     limit: int = 50,
     offset: int = 0,
 ):
     try:
         # Get chats and total count
-        chats = chat_repo.get_chats_by_user(current_user, limit=limit, offset=offset)
-        total_chats = chat_repo.count_chats_by_user(current_user)
+        chats = chat_repo.get_chats_by_user(limit=limit, offset=offset)
+        total_chats = chat_repo.count_chats_by_user()
 
         # Calculate pagination metadata
         has_next = offset + limit < total_chats
@@ -100,7 +97,6 @@ async def list_chats(
 @router.get("/{chat_id}", response_model=CommonResponse)
 async def get_chat(
     chat_id: uuid.UUID,
-    current_user=Depends(get_current_user),
     chat_repo: ChatRepository = Depends(get_chat_repository),
     message_repo: MessageRepository = Depends(get_message_repository),
     file_repo: FileRepository = Depends(get_file_repository),
@@ -108,7 +104,7 @@ async def get_chat(
     offset: int = 0,
 ):
     try:
-        db_chat = chat_repo.get_chat_by_id(chat_id, current_user)
+        db_chat = chat_repo.get_chat_by_id(chat_id)
         if not db_chat:
             return JSONResponse(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -127,10 +123,10 @@ async def get_chat(
         for msg in messages:
             message_response = MessageInDB.from_orm(msg)
             if msg.file_id:
-                db_file = file_repo.get_file_by_id(msg.file_id, current_user)
+                db_file = file_repo.get_file_by_id(msg.file_id)
                 if db_file:
                     file_key = db_file.file_url.split(
-                        f"{config.S3_BUCKET}.s3.{config.AWS_REGION}.amazonaws.com/"
+                        f"{config.AWS_S3_BUCKET}.s3.{config.AWS_REGION_NAME}.amazonaws.com/"
                     )[-1]
                     message_response.file.file_url = generate_presigned_url(
                         file_key, expires_in=3600
@@ -158,14 +154,10 @@ async def get_chat(
 @router.delete("/{chat_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_chat(
     chat_id: uuid.UUID,
-    current_user=Depends(get_current_user),
     chat_repo: ChatRepository = Depends(get_chat_repository),
 ):
-    if isinstance(current_user, JSONResponse):
-        return current_user
-
     try:
-        deleted = chat_repo.delete_chat(chat_id, current_user)
+        deleted = chat_repo.delete_chat(chat_id)
         if not deleted:
             return JSONResponse(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -203,13 +195,12 @@ async def send_message_auth(
     chat_id: uuid.UUID,
     content: Optional[str] = Form(None, max_length=1000),
     file: Optional[UploadFile] = File(None),
-    current_user=Depends(get_current_user),
     chat_repo: ChatRepository = Depends(get_chat_repository),
     message_repo: MessageRepository = Depends(get_message_repository),
     file_repo: FileRepository = Depends(get_file_repository),
 ):
     try:
-        db_chat = chat_repo.get_chat_by_id(chat_id, current_user)
+        db_chat = chat_repo.get_chat_by_id(chat_id)
         if not db_chat:
             return JSONResponse(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -228,7 +219,6 @@ async def send_message_auth(
             try:
                 file_url = upload_to_s3(file, folder=f"chat_{chat_id}", expires_in=3600)
                 db_file = file_repo.create_file(
-                    user=current_user,
                     file_url=file_url,
                     file_type=file.content_type,
                     file_size=file.size,
@@ -260,7 +250,7 @@ async def send_message_auth(
                     metadata={"original_content": content},
                 )
                 message_repo.create_message(
-                    chat=db_chat, sender=SenderType.CORE, content=content
+                    chat=db_chat, sender=SenderType.AGENT, content=content
                 )
             except HTTPException as e:
                 return JSONResponse(
@@ -299,12 +289,11 @@ async def send_message_auth(
 async def add_tag(
     chat_id: uuid.UUID,
     tag: TagCreate,
-    current_user=Depends(get_current_user),
     chat_repo: ChatRepository = Depends(get_chat_repository),
     tag_repo: TagRepository = Depends(get_tag_repository),
 ):
     try:
-        db_chat = chat_repo.get_chat_by_id(chat_id, current_user)
+        db_chat = chat_repo.get_chat_by_id(chat_id)
         if not db_chat:
             return JSONResponse(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -316,7 +305,7 @@ async def add_tag(
                 ).dict(),
             )
 
-        db_tag = tag_repo.create_tag(current_user, tag.name)
+        db_tag = tag_repo.create_tag(tag.name)
         tag_repo.add_tag_to_chat(chat_id, db_tag.id)
         return CommonResponse(
             message="Tag added to chat successfully",
@@ -343,12 +332,11 @@ async def add_tag(
 async def remove_tag(
     chat_id: uuid.UUID,
     tag_id: uuid.UUID,
-    current_user=Depends(get_current_user),
     chat_repo: ChatRepository = Depends(get_chat_repository),
     tag_repo: TagRepository = Depends(get_tag_repository),
 ):
     try:
-        db_chat = chat_repo.get_chat_by_id(chat_id, current_user)
+        db_chat = chat_repo.get_chat_by_id(chat_id)
         if not db_chat:
             return JSONResponse(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -360,7 +348,7 @@ async def remove_tag(
                 ).dict(),
             )
 
-        db_tag = tag_repo.get_tag_by_id(tag_id, current_user)
+        db_tag = tag_repo.get_tag_by_id(tag_id)
         if not db_tag:
             return JSONResponse(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -395,7 +383,7 @@ async def remove_tag(
     "/messages", status_code=status.HTTP_200_OK, tags=["chat"], response_model=None
 )
 async def send_message(
-    content: Optional[str] = Form(None, max_length=1000),
+    content: Optional[str] = Form(None, max_length=3000),
     response_type: Optional[str] = Form(None),
     is_new_chat: Optional[bool] = Form(None),
     session_id: Optional[str] = Form(None),

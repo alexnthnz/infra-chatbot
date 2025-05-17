@@ -2,7 +2,6 @@ import logging
 import sys
 
 from fastapi import FastAPI
-from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 
 from database import database
@@ -26,8 +25,6 @@ app = FastAPI(title="Handler Service")
 database.migrate_db()
 
 app.mount("/api/v1", api_v1)
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login")
 
 origins = ["*"]
 
