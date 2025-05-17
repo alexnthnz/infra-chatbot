@@ -2,7 +2,7 @@ import logging
 from typing import AsyncGenerator
 
 from langchain_aws import ChatBedrockConverse
-from langchain_core.messages import ToolMessage, HumanMessage, SystemMessage
+from langchain_core.messages import ToolMessage, HumanMessage, SystemMessage, AIMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_postgres import PostgresChatMessageHistory
 from langgraph.graph import StateGraph, END
@@ -124,43 +124,71 @@ class Graph:
 
     async def get_message(self, question: str) -> str:
         """
-        Invoke the graph to process a question and return the final message content.
+        Invoke the graph to process a question and return all new messages in a structured format.
 
         Args:
             question (str): The user's question or message.
 
         Returns:
-            str: The final message content from the graph's response.
+            str: A structured string containing all new messages generated during processing.
         """
-
         history_messages = self.conversation_history.get_messages()
         last_10_messages = (
             history_messages[-10:] if len(history_messages) > 10 else history_messages
         )
 
-        logger.info(f"Last 10 messages: {last_10_messages}")
-
-        system_message_content_1 = """
+        system_message_content = """
         You are a helpful assistant designed to provide accurate and relevant answers. Follow these guidelines:
         1. Answer the user's question to the best of your ability in a clear, concise, and conversational tone.
         2. If you don't know the answer, respond with "I don't know" and suggest how the user can find the information.
         3. If the question is unclear, ask the user to clarify or provide more details.
-        4. Use the provided conversation history (the last 10 messages) to give contextually relevant answers. The history is included as separate messages before the user's question.
-        5. You have access to tools to retrieve external information. Use them when the question requires up-to-date data, specific facts, or information beyond your knowledge. If unsure whether to use a tool, prioritize direct answers unless the question explicitly requires external data.
-        6. If more context is needed to provide a better answer, ask the user for additional details.
+        4. Use the provided conversation history (the last 10 messages) to give contextually relevant answers.
+        5. You have access to tools to retrieve external information. Use them when the question requires up-to-date data, specific facts, or information beyond your knowledge.
+        6. If more context is needed, ask the user for additional details.
         The user's question follows the history.
         """
 
         old_context_messages = [
-            SystemMessage(content=system_message_content_1),
+            SystemMessage(content=system_message_content),
             *last_10_messages,
         ]
+
+        last_message = last_10_messages[-1] if last_10_messages else None
+        human_assistance_tool_call_id = None
+        human_assistance_tool_args = None
+        if (
+            last_message
+            and isinstance(last_message, AIMessage)
+            and hasattr(last_message, "tool_calls")
+            and last_message.tool_calls
+        ):
+            for tool_call in last_message.tool_calls:
+                if tool_call["name"] == "human_assistance":
+                    human_assistance_tool_call_id = tool_call["id"]
+                    human_assistance_tool_args = tool_call["args"]
+                    break
+
+        # If there's a pending human_assistance tool call, process it
+        if human_assistance_tool_call_id:
+            # Validate query
+            query = human_assistance_tool_args.get("query")
+            if not query or not isinstance(query, str):
+                raise ValueError("Invalid or missing query for human_assistance")
+
+            # Append the tool result as a ToolMessage
+            human_message = ToolMessage(
+                content=question,
+                name="human_assistance",
+                tool_call_id=human_assistance_tool_call_id,
+            )
+        else:
+            human_message = HumanMessage(content=question)
 
         try:
             # Invoke the graph with the question
             result = await self.graph.ainvoke(
                 {
-                    "messages": [*old_context_messages, HumanMessage(content=question)],
+                    "messages": [*old_context_messages, human_message],
                 }
             )
 
@@ -173,15 +201,34 @@ class Graph:
 
             logger.info(f"Filtered messages: {filtered_messages}")
 
+            # Store all new messages in the conversation history
             self.conversation_history.add_messages(filtered_messages)
-            for message in result["messages"]:
-                logger.info(message)
 
-            # Extract the last message from the state
-            last_message = result["messages"][-1]
+            # Build the response by processing all filtered messages
+            response_parts = []
+            for message in filtered_messages:
+                if isinstance(message, AIMessage):
+                    if len(message.tool_calls) > 0:
+                        for ai_message in message.content:
+                            if isinstance(ai_message, dict):
+                                ai_message_type = ai_message.get("type")
+                                ai_message_name = ai_message.get("name")
+                                if ai_message_type == "text":
+                                    response_parts.append(ai_message.get("text"))
+                                elif (
+                                    ai_message_type == "tool_use"
+                                    and ai_message_name == "human_assistance"
+                                ):
+                                    ai_message_input = ai_message.get("input")
+                                    response_parts.append(ai_message_input.get("query"))
+                    else:
+                        response_parts.append(message.content)
 
-            # Handle different content types
-            return last_message.content
+            # Combine all parts into a single response, separated by newlines
+            final_response = "\n".join(response_parts)
+
+            logger.info(f"Final response: {final_response}")
+            return final_response
 
         except Exception as e:
             logger.error(f"Error processing message: {e}")

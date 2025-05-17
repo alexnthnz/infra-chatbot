@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+
 from .chat import router as chat_router
 
 api_v1 = FastAPI()
