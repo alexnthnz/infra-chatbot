@@ -1,132 +1,150 @@
-# Infra Chatbot
+# LLM Tool Flow
 
-An intelligent infrastructure chatbot system that integrates RAG (Retrieval-Augmented Generation) with a fine-tunable language model to answer infrastructure and deployment related queries.
+A tool flow system that leverages AWS services including Lambda, S3, KnowledgeBase, and optionally SageMaker for LLM inference.
 
-![Architecture](./assets/image.png)
-
-## Overview
-
-This repository implements a comprehensive chatbot solution designed to assist with infrastructure questions. The system combines:
-
-- A modern web interface built with Next.js
-- A RAG pipeline for retrieving relevant context
-- LangChain Agent for orchestrating the pipeline
-- Fine-tuning capabilities to continuously improve responses
-
-## Components
-
-### Frontend Application (`/app`)
-- Next.js web interface
-- Responsive UI components
-- API integration with the backend
-
-### Chatbot Backend (`/chatbot`)
-- **Core**: Central processing engine
-- **Agent**: LangChain implementation for query handling
-- **Handler**: Request processing and response generation
-
-## Getting Started
+## Setup Instructions
 
 ### Prerequisites
-- Node.js 18+
-- Python 3.8+
-- Docker and Docker Compose
+- AWS CLI installed and configured
+- Terraform installed
+- Docker installed (for building and pushing container images)
+- Bun.js for running the web application
 
-### Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/infra-chatbot.git
-   cd infra-chatbot
-   ```
-
-2. Set up the frontend:
-   ```bash
-   cd app
-   npm install
-   cp .env.example .env  # Configure environment variables
-   ```
-
-3. Set up the chatbot backend:
-   ```bash
-   # Set up core
-   cd chatbot/core
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install -r requirements.txt
-
-   # Set up agent
-   cd ../agent
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install -r requirements.txt
-   ```
-
-4. Docker setup (alternative):
-   ```bash
-   docker-compose up -d
-   ```
-
-## Usage
-
-### Starting the application
-
-1. Run the frontend:
-   ```bash
-   cd app
-   npm run dev
-   ```
-
-2. Run the backend services:
-   ```bash
-   # Using Docker
-   docker-compose up
-
-   # Or run services individually
-   cd chatbot/core
-   # Start core service
-   
-   cd ../agent
-   # Start agent service
-   ```
-
-3. Access the web interface at `http://localhost:3000`
-
-## Development
-
-### Project Structure
+### Step 1: Configure AWS CLI
+```bash
+aws configure
 ```
-infra-chatbot/
-├── app/                 # Next.js frontend
-│   ├── src/             # Application source code
-│   │   ├── components/  # UI components
-│   │   ├── app/         # Next.js app router pages
-│   │   └── lib/         # Utility functions
-├── chatbot/             # Backend services
-│   ├── core/            # Core processing engine
-│   ├── agent/           # LangChain agent implementation
-│   └── handler/         # Request handler service
-├── assets/              # Project assets and documentation
-└── deploy/              # Deployment configurations
+Enter your AWS Access Key ID, Secret Access Key, default region (ap-southeast-2), and output format (json).
+
+### Step 2: Setup ECR Repositories
+```bash
+# View available make commands
+make help
+
+# Create ECR repositories
+make setup-ecr
+
+# If you need to delete ECR repositories
+make drop-ecr
 ```
 
-### Contributing
+### Step 3: Setup Terraform Remote State
+```bash
+# Navigate to the state directory
+cd deploy/state
 
-1. Create a feature branch:
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
+# Comment out the terraform backend block in main.tf
+# (lines 45-52 in main.tf)
 
-2. Make your changes and commit:
-   ```bash
-   git commit -m "Add your feature description"
-   ```
+# Initialize and apply terraform to create S3 bucket and DynamoDB table for state
+terraform init
+terraform apply
 
-3. Push and create a pull request:
-   ```bash
-   git push origin feature/your-feature-name
-   ```
+# After successful creation, uncomment the backend block and re-initialize
+# to migrate state to S3
+terraform init
+```
 
-## License
+### Step 4: Deploy Infrastructure
 
-This project is licensed under the MIT License.
+```bash
+# Navigate to the infrastructure directory
+cd deploy/infra/env/prod
+
+# Create or update terraform.tfvars using the following format:
+aws_region = "ap-southeast-2"
+vpc_name = "LLMToolFlow_vpc"
+cidr_block = "10.0.0.0/16"
+aurora_name = "llmtoolflow-aurora"
+aurora_master_username = "root"
+elasticache_enabled = false
+elasticache_name = "llmtoolflow-elasticache-redis"
+secret_name = "llmtoolflow-envs"
+bastion_name = "LLMToolFlow"
+ec2_bastion_ingress_ips = ["your-ip-address/32"]
+kb_name = "LLMToolFlow_kb"
+kb_s3_bucket_name_prefix = "llmtoolflow-kb"
+kb_oss_collection_name = "llmtoolflow-kb"
+kb_model_id = "amazon.titan-embed-text-v2:0"
+s3_bucket_handler_name = "llmtoolflow-handler-files"
+lambda_function_handler_name = "llmtoolflow-handler"
+lambda_function_ecr_image_uri = "your-account-id.dkr.ecr.ap-southeast-2.amazonaws.com/llmtoolflow-prod-handler-ecr:0.0.6"
+sagemaker_enabled = false
+sagemaker_name = "llmtoolflow-sagemaker"
+sagemaker_ecr_image_uri = "763104351884.dkr.ecr.ap-southeast-2.amazonaws.com/huggingface-pytorch-tgi-inference:2.6.0-tgi3.2.3-gpu-py311-cu124-ubuntu22.04-v2.0"
+sagemaker_initial_instance_count = 1
+sagemaker_instance_type = "ml.g5.xlarge"
+sagemaker_hf_model_id = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+sagemaker_hf_access_token = "your-huggingface-token"
+sagemaker_tgi_config = {
+  max_input_tokens = 4000,
+  max_total_tokens = 4096,
+  max_batch_total_tokens = 6144,
+}
+
+# Deploy shared modules first
+terraform init
+terraform plan -out=tfplan -target="module.shared"
+terraform apply tfplan
+
+# Configure environment variables in AWS Secrets Manager
+# Go to AWS Console > Secrets Manager > Find "llmtoolflow-envs" secret
+# Update with necessary environment variables
+
+# Deploy handler module
+terraform plan -out=tfplan -target="module.handler"
+terraform apply tfplan
+```
+
+### Step 5: Configure and Run Web Application
+
+```bash
+# Copy the API Gateway URL from AWS Lambda Console
+# Navigate to the app directory
+cd app
+
+# Create .env file with API Gateway URL
+echo "API_URL=https://your-api-gateway-url" > .env
+
+# Install dependencies and run the app
+bun install
+bun run dev
+```
+
+### Full Deployment (Building and Deploying Handler)
+
+To build, push, and update the handler Lambda function:
+
+```bash
+# Build and push the handler container
+make all SERVICE=handler MAJOR=0 MINOR=0
+
+# This will:
+# 1. Create a virtual environment and install dependencies
+# 2. Run tests (if any)
+# 3. Build the container image
+# 4. Push to ECR
+# 5. Update terraform.tfvars with the new image URI
+```
+
+After pushing a new image, update the Lambda function:
+
+```bash
+cd deploy/infra/env/prod
+terraform plan -out=tfplan -target="module.handler"
+terraform apply tfplan
+```
+
+## Architecture
+
+The system uses several AWS services:
+- API Gateway and Lambda for backend processing
+- S3 for file storage
+- Amazon Bedrock or SageMaker for LLM inference
+- AWS Knowledge Base for document storage and retrieval
+- Aurora PostgreSQL for database storage (optional)
+- ElastiCache for Redis caching (optional)
+
+## Web Application
+
+The web application is built with Next.js and provides a simple interface for interacting with the tool flow system.
