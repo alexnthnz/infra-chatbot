@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Infra Chatbot',
+  title: 'DeepFlow',
   description: 'An infrastructure chatbot application',
 };
 

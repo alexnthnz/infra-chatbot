@@ -142,3 +142,76 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Add styles for markdown content */
+.prose {
+  @apply text-base;
+}
+
+.prose p {
+  @apply my-3 leading-relaxed;
+}
+
+.prose h1 {
+  @apply text-2xl font-bold my-4;
+}
+
+.prose h2 {
+  @apply text-xl font-bold my-3;
+}
+
+.prose h3 {
+  @apply text-lg font-bold my-3;
+}
+
+.prose ul {
+  @apply list-disc pl-6 my-3;
+}
+
+.prose ol {
+  @apply list-decimal pl-6 my-3;
+}
+
+.prose li {
+  @apply my-2 leading-relaxed;
+}
+
+.prose a {
+  @apply text-blue-600 font-medium hover:underline;
+}
+
+.prose code {
+  @apply bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded font-mono text-sm;
+}
+
+.prose pre {
+  @apply bg-gray-800 text-gray-200 p-4 rounded-md my-4 overflow-x-auto;
+}
+
+.prose pre code {
+  @apply bg-transparent text-inherit p-0 block font-mono;
+}
+
+.prose blockquote {
+  @apply border-l-4 border-gray-300 pl-4 py-1 italic my-4 text-gray-700;
+}
+
+.prose table {
+  @apply w-full border-collapse my-4;
+}
+
+.prose th {
+  @apply border border-gray-300 px-3 py-2 bg-gray-100 font-semibold;
+}
+
+.prose td {
+  @apply border border-gray-300 px-3 py-2;
+}
+
+.prose img {
+  @apply max-w-full rounded-md my-4 mx-auto;
+}

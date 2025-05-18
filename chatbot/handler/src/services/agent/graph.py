@@ -24,6 +24,7 @@ class Graph:
             max_tokens=None,
             region_name=config.AWS_REGION_NAME,
         )
+        self.thread_id = session_id
 
         self.conversation_history = PostgresChatMessageHistory(
             "chat_history",
@@ -133,9 +134,29 @@ class Graph:
             str: A structured string containing all new messages generated during processing.
         """
         history_messages = self.conversation_history.get_messages()
+
+        # Get the last 10 messages, or all if fewer than 10
         last_10_messages = (
             history_messages[-10:] if len(history_messages) > 10 else history_messages
         )
+
+        # If the first message is a ToolMessage, find the most recent HumanMessage before it
+        if len(last_10_messages) > 0 and isinstance(last_10_messages[0], ToolMessage):
+            # Search backwards for the most recent HumanMessage
+            for i in range(len(history_messages) - 1, -1, -1):
+                if isinstance(history_messages[i], HumanMessage):
+                    # Include the HumanMessage and the 9 messages after it, if available
+                    start_index = max(0, i)
+                    end_index = min(len(history_messages), start_index + 10)
+                    last_10_messages = history_messages[start_index:end_index]
+                    break
+            else:
+                # If no HumanMessage is found, use the original selection (or handle as needed)
+                last_10_messages = (
+                    history_messages[-10:]
+                    if len(history_messages) > 10
+                    else history_messages
+                )
 
         system_message_content = """
         You are a helpful assistant designed to provide accurate and relevant answers. Follow these guidelines:
@@ -189,7 +210,8 @@ class Graph:
             result = await self.graph.ainvoke(
                 {
                     "messages": [*old_context_messages, human_message],
-                }
+                },
+                {"configurable": {"thread_id": self.thread_id}},
             )
 
             # Filter out the messages that are in old_context_messages
@@ -214,15 +236,47 @@ class Graph:
                                 ai_message_type = ai_message.get("type")
                                 ai_message_name = ai_message.get("name")
                                 if ai_message_type == "text":
-                                    response_parts.append(ai_message.get("text"))
+                                    text = ai_message.get("text")
+                                    response_parts.append(f"### Response\n{text}\n")
                                 elif (
                                     ai_message_type == "tool_use"
                                     and ai_message_name == "human_assistance"
                                 ):
                                     ai_message_input = ai_message.get("input")
-                                    response_parts.append(ai_message_input.get("query"))
+                                    query = ai_message_input.get("query")
+                                    response_parts.append(
+                                        f"### Human Assistance Query\n**Query:** {query}\n"
+                                    )
                     else:
-                        response_parts.append(message.content)
+                        response_parts.append(f"### Response\n{message.content}\n")
+                elif isinstance(message, ToolMessage):
+                    if message.name == "tavily_search":
+                        # Parse the tool message content to format it in Markdown
+                        lines = message.content.split("\n")
+                        query = lines[0].replace("Search query: ", "")
+                        results = "\n".join(lines[2:]).strip()
+                        formatted_results = ""
+                        for result in results.split("\n\n"):
+                            if result.strip():
+                                result_lines = result.split("\n")
+                                title = (
+                                    result_lines[0].replace("1. Title: ", "").strip()
+                                )  # Adjust numbering as needed
+                                url = result_lines[1].replace("   URL: ", "").strip()
+                                content = (
+                                    result_lines[2].replace("   Content: ", "").strip()
+                                )
+                                score = (
+                                    result_lines[3].replace("   Score: ", "").strip()
+                                )
+                                formatted_results += f"- **Title:** {title}\n  - **URL:** {url}\n  - **Content:** {content}\n  - **Score:** {score}\n"
+                        response_parts.append(
+                            f"### Search Results\n**Query:** {query}\n\n{formatted_results}\n"
+                        )
+                    else:
+                        response_parts.append(
+                            f"### Tool Result ({message.name})\n{message.content}\n"
+                        )
 
             # Combine all parts into a single response, separated by newlines
             final_response = "\n".join(response_parts)
