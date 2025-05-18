@@ -14,18 +14,10 @@ resource "aws_secretsmanager_secret_version" "lambda_secret_version" {
     AWS_BEDROCK_MODEL_ID = ""
     SERPER_API_KEY       = ""
     TAVILY_API_KEY       = ""
-    JWT_ACCESS_SECRET    = ""
-    JWT_REFRESH_SECRET   = ""
-    JWT_ALGORITHM        = ""
-    JWT_AUDIENCE         = ""
-    JWT_ISSUER           = ""
     REDIS_HOST           = ""
     REDIS_PORT           = ""
     REDIS_DB             = ""
     AWS_S3_BUCKET        = ""
-    GOOGLE_CLIENT_ID     = ""
-    GOOGLE_CLIENT_SECRET = ""
-    GOOGLE_REDIRECT_URI  = ""
   })
 
   # Ensure the secret is created before setting the version

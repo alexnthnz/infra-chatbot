@@ -1,13 +1,8 @@
 'use client';
 
-import { SessionProvider } from 'next-auth/react';
 import { ReactNode } from 'react';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { Provider } from 'jotai';
 
 export function Providers({ children }: { children: ReactNode }) {
-  return (
-    <SessionProvider>
-      <SidebarProvider>{children}</SidebarProvider>
-    </SessionProvider>
-  );
+  return <Provider>{children}</Provider>;
 }
