@@ -22,6 +22,16 @@ class ChatRepository:
         self.db.refresh(chat)
         return chat
 
+    def update_chat(self, chat_id: uuid.UUID, title: str) -> Chat | None:
+        """Update the title of a chat."""
+        chat = self.db.query(Chat).filter(Chat.id == chat_id).first()
+        if not chat:
+            return None
+        chat.title = title
+        self.db.commit()
+        self.db.refresh(chat)
+        return chat
+
     def get_chats_by_user(self, limit: int = 50, offset: int = 0) -> List[Chat]:
         """List chats for a user with pagination."""
         return (

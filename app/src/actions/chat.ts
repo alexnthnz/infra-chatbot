@@ -8,7 +8,7 @@ const MessageSchema = z.object({
   content: z.string().min(1, 'Message cannot be empty'),
   is_new_chat: z.boolean().default(false),
   session_id: z.string().optional(),
-  response_type: z.enum(['json', 'stream']).default('json'),
+  attachments: z.array(z.instanceof(File)).optional(),
 }).refine(data => {
   // If not a new chat, session_id must be provided
   if (!data.is_new_chat && (!data.session_id || data.session_id.trim() === '')) {
@@ -30,7 +30,12 @@ type Message = z.infer<typeof MessageSchema>;
  */
 export async function sendMessage(message: Message): Promise<{ 
   success: boolean; 
-  data?: { message: string; session_id: string }; 
+  data?: { 
+    message: string; 
+    session_id: string;
+    resources: string[];
+    images: string[];
+  }; 
   error?: string 
 }> {
   try {
@@ -40,12 +45,18 @@ export async function sendMessage(message: Message): Promise<{
     // Prepare the FormData for the API
     const formData = new FormData();
     formData.append('content', validatedData.content);
-    formData.append('response_type', validatedData.response_type);
     formData.append('is_new_chat', validatedData.is_new_chat ? '1' : '0');
     
     // Only append session_id if it's not a new chat
     if (!validatedData.is_new_chat && validatedData.session_id) {
       formData.append('session_id', validatedData.session_id);
+    }
+    
+    // Add attachments if provided - using the correct parameter name 'attachments'
+    if (validatedData.attachments && validatedData.attachments.length > 0) {
+      validatedData.attachments.forEach((file) => {
+        formData.append('attachments', file);
+      });
     }
 
     // Make the API request
