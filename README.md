@@ -2,6 +2,8 @@
 
 A tool flow system that leverages AWS services including Lambda, S3, KnowledgeBase, and optionally SageMaker for LLM inference.
 
+![Application Interface](assets/sample.png)
+
 ## Setup Instructions
 
 ### Prerequisites
