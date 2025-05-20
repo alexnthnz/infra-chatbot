@@ -1,9 +1,10 @@
 import logging
 import uuid
+import base64
 
 from fastapi import Depends, status, UploadFile, File, Form, HTTPException, APIRouter
-from fastapi.responses import StreamingResponse, JSONResponse
-from typing import Optional, AsyncGenerator
+from fastapi.responses import JSONResponse
+from typing import Optional, List
 
 from services.agent.graph import Graph
 from config.config import config
@@ -384,29 +385,25 @@ async def remove_tag(
 )
 async def send_message(
     content: Optional[str] = Form(None, max_length=3000),
-    response_type: Optional[str] = Form(None),
     is_new_chat: Optional[bool] = Form(None),
     session_id: Optional[str] = Form(None),
-) -> StreamingResponse | JSONResponse:
+    attachments: Optional[List[UploadFile]] = File(None),
+    chat_repo: ChatRepository = Depends(get_chat_repository),
+) -> JSONResponse:
     """
     Handle incoming messages and return the Agent's response.
 
     Args:
-        content (Optional[str]): The user's message, max 1000 characters.
-        response_type (Optional[str]): Response format, either 'stream' or 'json'.
+        content (Optional[str]): The user's message, max 3000 characters.
         is_new_chat (Optional[bool]): The new chat flag.
-        session_id
+        session_id (Optional[str]): The session ID for existing chats.
+        attachments (Optional[List[UploadFile]]): Optional array of file attachments.
+        chat_repo (ChatRepository): Dependency to interact with the chat repository.
     Returns:
-        StreamingResponse: Agent's response streamed as Server-Sent Events (SSE) if response_type is 'stream'.
         JSONResponse: Agent's response as JSON if response_type is 'json'.
     """
-    if response_type not in ["stream", "json", None]:
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content={"error": "Invalid response type. Use 'stream' or 'json'."},
-        )
 
-    if is_new_chat not in [1, 0, "1", "0", "True", "False", "true", "false"]:
+    if is_new_chat not in [1, 0, "1", "0", "True", "False", "true", "false", None]:
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
             content={"error": "Invalid is_new_chat value. Use True or False."},
@@ -423,25 +420,11 @@ async def send_message(
     elif is_new_chat in [0, "0", "False", False]:
         is_new_chat = False
 
-    # Default to 'stream' if response_type is not provided
-    response_type = response_type or "stream"
-
-    if not content:
-        if response_type == "json":
-            return JSONResponse(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                content={"error": "Message content is required."},
-            )
-        else:
-
-            async def error_stream() -> AsyncGenerator[str, None]:
-                yield "data: Error: Message content is required\n\n"
-
-            return StreamingResponse(
-                error_stream(),
-                status_code=status.HTTP_400_BAD_REQUEST,
-                media_type="text/event-stream",
-            )
+    if not content and not attachments:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": "Message content or attachments are required."},
+        )
 
     if is_new_chat is True:
         # Initialize a new chat session
@@ -449,34 +432,40 @@ async def send_message(
 
     agent = Graph(session_id=session_id)
 
-    if response_type == "json":
-        try:
-            response = await agent.get_message(content)  # Await async get_message
-            return JSONResponse(
-                status_code=status.HTTP_200_OK,
-                content={"message": response, "session_id": session_id},
-            )
-        except Exception as e:
-            logger.error(f"Error processing message: {e}")
-            return JSONResponse(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                content={"error": f"Failed to process message: {str(e)}"},
-            )
-    else:
-        try:
-            return StreamingResponse(
-                agent.stream_message(content),
-                status_code=status.HTTP_200_OK,
-                media_type="text/event-stream",
-            )
-        except Exception as e:
-            logger.error(f"Error streaming message: {e}")
+    try:
+        # Process attachments if provided
+        attachment_data = []
+        if attachments:
+            for file in attachments:
+                if file:
+                    # Read file content
+                    content = await file.read()
+                    # Convert file content to Base64
+                    base64_content = base64.b64encode(content).decode("utf-8")
+                    attachment_data.append(
+                        {
+                            "filename": file.filename,
+                            "content_type": file.content_type,
+                            "size": len(content),
+                            "base64": base64_content,  # Add Base64-encoded content
+                        }
+                    )
 
-            async def error_stream() -> AsyncGenerator[str, None]:
-                yield f"data: Error: Failed to process message: {str(e)}\n\n"
-
-            return StreamingResponse(
-                error_stream(),
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                media_type="text/event-stream",
-            )
+        response, resources, images = await agent.get_message(
+            content, attachments=attachment_data
+        )
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={
+                "message": response,
+                "session_id": session_id,
+                "resources": resources,
+                "images": images,
+            },
+        )
+    except Exception as e:
+        logger.error(f"Error processing message: {e}")
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"error": f"Failed to process message: {str(e)}"},
+        )

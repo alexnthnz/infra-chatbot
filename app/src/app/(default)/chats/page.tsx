@@ -25,7 +25,7 @@ export default function ChatsPage() {
   };
   
   const navigateToChat = (sessionId: string) => {
-    router.push(`/chat/${sessionId}`);
+    router.push(`/chats/${sessionId}`);
   };
   
   const navigateToHome = () => {
@@ -43,7 +43,6 @@ export default function ChatsPage() {
     <div className="p-8 max-w-5xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Your Chat Sessions</h1>
-        <Button onClick={navigateToHome} className="text-base px-6 py-5">Start New Chat</Button>
       </div>
       
       {sessionIds.length === 0 ? (

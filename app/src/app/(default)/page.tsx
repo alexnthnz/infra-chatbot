@@ -46,7 +46,6 @@ export default function HomePage() {
       const result = await sendMessage({
         content: inputValue,
         is_new_chat: true,
-        response_type: 'json'
       });
       
       if (!result.success || !result.data) {
@@ -64,11 +63,13 @@ export default function HomePage() {
       initChatSession({ 
         sessionId: session_id, 
         initialUserMessage: inputValue,
-        initialMessage: message 
+        initialMessage: message,
+        initialResources: result.data.resources,
+        initialImages: result.data.images
       });
       
       // Redirect to the chat page with the session ID
-      router.push(`/chat/${session_id}`);
+      router.push(`/chats/${session_id}`);
     } catch (error) {
       console.error('Error sending message:', error);
       alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);

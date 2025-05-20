@@ -6,6 +6,8 @@ export interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp?: string; // Store as ISO string instead of Date object
+  resources?: string[];
+  images?: string[];
 }
 
 // Session chat state interface
@@ -77,11 +79,15 @@ export const initChatSessionAtom = atom(
   (get, set, { 
     sessionId, 
     initialMessage, 
-    initialUserMessage 
+    initialUserMessage,
+    initialResources,
+    initialImages 
   }: { 
     sessionId: string; 
     initialMessage?: string;
     initialUserMessage?: string;
+    initialResources?: string[];
+    initialImages?: string[];
   }) => {
     const sessions = get(chatSessionsAtom);
     
@@ -103,7 +109,9 @@ export const initChatSessionAtom = atom(
     if (initialMessage) {
       initialMessages.push({ 
         role: 'assistant', 
-        content: initialMessage, 
+        content: initialMessage,
+        resources: initialResources,
+        images: initialImages,
         timestamp: new Date().toISOString() 
       });
     }
