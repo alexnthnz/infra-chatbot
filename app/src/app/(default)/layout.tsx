@@ -11,6 +11,7 @@ export default function DefaultLayout({ children }: { children: React.ReactNode 
   // Check if we're on the chats route or a specific chat session
   const isChatsRoute = pathname === '/chats';
   const isChatSessionRoute = pathname.startsWith('/chats/');
+  const isHomeRoute = pathname === '/';
 
   return (
     <div className="flex flex-col overflow-hidden w-full h-screen">
@@ -20,7 +21,7 @@ export default function DefaultLayout({ children }: { children: React.ReactNode 
             <h1 className="text-xl font-semibold">DeepFlow</h1>
           </div>
           <div className="flex items-center gap-2">
-            {isChatSessionRoute && (
+            {isChatSessionRoute || isHomeRoute && (
               <Button
                 variant="outline"
                 size="sm"
