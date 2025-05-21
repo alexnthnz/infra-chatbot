@@ -1,24 +1,30 @@
-# LLM Tool Flow
+# Deepflow
 
-A tool flow system that leverages AWS services including Lambda, S3, KnowledgeBase, and optionally SageMaker for LLM inference.
+An advanced Agentic AI system built on LangGraph and RAG, seamlessly integrating specialized tools and
+AWS services—such as Lambda, S3, Bedrock, SageMaker, and Aurora RDS—to synergize large language models with
+capabilities like web search, GitHub repository importing, and automated task execution
 
 ![Application Interface](assets/sample.png)
 
 ## Setup Instructions
 
 ### Prerequisites
+
 - AWS CLI installed and configured
 - Terraform installed
 - Docker installed (for building and pushing container images)
 - Bun.js for running the web application
 
 ### Step 1: Configure AWS CLI
+
 ```bash
 aws configure
 ```
+
 Enter your AWS Access Key ID, Secret Access Key, default region (ap-southeast-2), and output format (json).
 
 ### Step 2: Setup ECR Repositories
+
 ```bash
 # View available make commands
 make help
@@ -31,6 +37,7 @@ make drop-ecr
 ```
 
 ### Step 3: Setup Terraform Remote State
+
 ```bash
 # Navigate to the state directory
 cd deploy/state
@@ -140,6 +147,7 @@ terraform apply tfplan
 ## Architecture
 
 The system uses several AWS services:
+
 - API Gateway and Lambda for backend processing
 - S3 for file storage
 - Amazon Bedrock or SageMaker for LLM inference
