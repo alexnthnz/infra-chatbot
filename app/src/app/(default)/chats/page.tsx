@@ -51,13 +51,13 @@ export default function ChatsPage() {
           <Button onClick={navigateToHome} className="text-base px-6 py-5">Start a chat</Button>
         </div>
       ) : (
-        <div className="grid gap-5">
+        <div className="flex flex-col gap-5 h-[calc(100vh-200px)] overflow-y-auto">
           {sessionIds.map((sessionId) => {
             const lastMessage = getLastMessage(sessionId);
             return (
               <Card 
                 key={sessionId}
-                className="p-6 hover:bg-gray-50 cursor-pointer transition-colors relative border border-gray-200 shadow-sm"
+                className="p-6 h-48 hover:bg-gray-50 cursor-pointer transition-colors relative border border-gray-200 shadow-sm"
                 onClick={() => navigateToChat(sessionId)}
               >
                 <div className="flex justify-between mb-3">

@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSetAtom } from 'jotai';
+import { motion } from 'framer-motion';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
@@ -20,6 +21,14 @@ import {
 } from 'lucide-react';
 import { sendMessage } from '@/actions/chat';
 import { initChatSessionAtom } from '@/store/chat';
+import ChatMessage from '@/components/chat/message';
+
+const questions = [
+  "How many times taller is the Eiffel Tower than the tallest building in the world?",
+  "How many years does an average Tesla battery last compared to a gasoline engine?",
+  "How many liters of water are required to produce 1 kg of beef?",
+  "How many times faster is the speed of light compared to the speed of sound?",
+];
 
 export default function HomePage() {
   const router = useRouter();
@@ -31,63 +40,62 @@ export default function HomePage() {
   const [isDeepSearchEnabled, setIsDeepSearchEnabled] = useState(false);
   const [isThinkEnabled, setIsThinkEnabled] = useState(false);
   const [selectedModel, setSelectedModel] = useState<string>('claude-3.5-sonnet-v2');
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const MAX_ATTACHMENTS = 5;
-  
+
   const AVAILABLE_MODELS = [
     { id: 'claude-3.5-sonnet-v2', name: 'Claude 3.5 Sonnet v2' },
     { id: 'claude-3.5-sonnet', name: 'Claude 3.5 Sonnet' },
     { id: 'claude-3-sonnet', name: 'Claude 3 Sonnet' },
     { id: 'claude-3-haiku', name: 'Claude 3 Haiku' },
   ] as const;
-  
+
   type ModelId = typeof AVAILABLE_MODELS[number]['id'];
-  
+
   // Get the setter function for initializing a chat session
   const initChatSession = useSetAtom(initChatSessionAtom);
 
   const handleSendMessage = async (message: string | null = null) => {
     const messageToSend = message || inputValue;
     if ((!messageToSend.trim() && attachments.length === 0) || isLoading || isRecording) return;
-    
+
     setIsLoading(true);
-    
+
     try {
       // First message is always a new chat
       const result = await sendMessage({
         content: messageToSend,
         is_new_chat: true,
       });
-      
+
       if (!result.success || !result.data) {
         throw new Error(result.error || 'Failed to send message');
       }
-      
+
       // Get data directly from the response
       const { message: responseMessage, session_id } = result.data;
-      
+
       if (!session_id) {
         throw new Error('No session ID received from the server');
       }
-      
+
       // Initialize the chat session in Jotai store with both user and assistant messages
-      initChatSession({ 
-        sessionId: session_id, 
+      initChatSession({
+        sessionId: session_id,
         initialUserMessage: messageToSend,
         initialMessage: responseMessage,
         initialResources: result.data.resources,
         initialImages: result.data.images
       });
-      
+
       // Redirect to the chat page with the session ID
       router.push(`/chats/${session_id}`);
     } catch (error) {
       console.error('Error sending message:', error);
       alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
       setIsLoading(false);
-    }
+    } 
   };
 
   const toggleRecording = () => {
@@ -125,56 +133,84 @@ export default function HomePage() {
 
   const hasReachedAttachmentLimit = attachments.length >= MAX_ATTACHMENTS;
 
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: (index: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        delay: index * 0.1,
+      },
+    }),
+  };
+
   return (
     <div className="flex flex-col bg-gray-50 h-[calc(100vh-64px)]">
-      <div className="flex-1 p-8 flex flex-col justify-end">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-5xl mx-auto">
-          <button 
-            onClick={() => {
-              setInputValue("How many times taller is the Eiffel Tower than the tallest building in the world?")
-              handleSendMessage("How many times taller is the Eiffel Tower than the tallest building in the world?")
-            }}
-            className="p-6 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow text-left"
+      {isLoading ? (
+        <main className="flex-1 p-6 overflow-auto bg-gray-50">
+          <div className="max-w-5xl mx-auto space-y-6">
+            <ChatMessage
+              role={'user'}
+              content={inputValue}
+              attachments={[]}
+              resources={[]}
+              images={[]}
+            />
+          </div>
+        </main>
+      ) : (
+        <div className="flex-1 p-8 flex flex-col items-center justify-center max-w-5xl mx-auto">
+          <motion.div
+            className="flex flex-col"
+            style={{ transition: "all 0.2s ease-out" }}
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
           >
-            <p className="text-lg text-gray-600">How many times taller is the Eiffel Tower than the tallest building in the world?</p>
-          </button>
-
-          <button 
-            onClick={() => {
-              setInputValue("How many years does an average Tesla battery last compared to a gasoline engine?")
-              handleSendMessage("How many years does an average Tesla battery last compared to a gasoline engine?")
-            }}
-            className="p-6 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow text-left"
-          >
-            <p className="text-lg text-gray-600">How many years does an average Tesla battery last compared to a gasoline engine?</p>
-          </button>
-
-          <button 
-            onClick={() => {
-              setInputValue("How many liters of water are required to produce 1 kg of beef?")
-              handleSendMessage("How many liters of water are required to produce 1 kg of beef?")
-            }}
-            className="p-6 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow text-left"
-          >
-            <p className="text-lg text-gray-600">How many liters of water are required to produce 1 kg of beef?</p>
-          </button>
-
-          <button 
-            onClick={() => {
-              setInputValue("How many times faster is the speed of light compared to the speed of sound?")
-              handleSendMessage("How many times faster is the speed of light compared to the speed of sound?")
-            }}
-            className="p-6 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow text-left"
-          >
-            <p className="text-lg text-gray-600">How many times faster is the speed of light compared to the speed of sound?</p>
-          </button>
+            <h3 className="mb-2 text-center text-3xl font-medium">
+              👋 Hello, there!
+            </h3>
+            <div className="text-muted-foreground px-4 text-center text-lg">
+              Welcome to{" "}
+              DeepFlow
+              , a deep research assistant built on cutting-edge language models, helps
+              you search on web, browse information, and handle complex tasks.
+            </div>
+          </motion.div>
+          <ul className="flex flex-wrap ">
+            {questions.map((question, index) => (
+              <motion.li
+                key={question}
+                className="flex w-1/2 shrink-0 p-2 active:scale-105"
+                style={{ transition: "all 0.2s ease-out" }}
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{
+                  duration: 0.2,
+                  delay: index * 0.1 + 0.5,
+                  ease: "easeOut",
+                }}
+              >
+                <div
+                  className="bg-card text-muted-foreground cursor-pointer rounded-2xl border px-4 py-4 opacity-75 transition-all duration-300 hover:opacity-100 hover:shadow-md"
+                  onClick={() => {
+                    setInputValue(question);
+                    handleSendMessage(question);
+                  }}
+                >
+                  {question}
+                </div>
+              </motion.li>
+            ))}
+          </ul>
         </div>
-      </div>
+      )}
 
       <footer className="bg-gray-50 p-6 w-full">
         <div className="max-w-5xl mx-auto">
           {/* Hidden file input for image uploads */}
-          <input 
+          <input
             type="file"
             ref={fileInputRef}
             onChange={handleImageUpload}
@@ -193,13 +229,13 @@ export default function HomePage() {
               Recording... {formatTime(recordingTime)}
             </div>
           )}
-          
+
           {hasReachedAttachmentLimit && (
             <div className="text-xs text-amber-600">
               Maximum of {MAX_ATTACHMENTS} attachments reached. Delete an attachment to add more.
             </div>
           )}
-          <div className="flex items-center bg-white rounded-lg shadow border px-4 py-2 gap-2 flex-col">            
+          <div className="flex items-center bg-white rounded-lg shadow border px-4 py-2 gap-2 flex-col">
             {attachments.length > 0 && (
               <div className="flex flex-wrap gap-2 w-full py-2">
                 {attachments.map((file, index) => {
@@ -208,7 +244,7 @@ export default function HomePage() {
                     <div key={file.name} className="relative group">
                       <div className="relative h-12 w-12 overflow-hidden rounded-md border border-gray-200 shadow-sm">
                         {fileType === 'image' ? (
-                          <img 
+                          <img
                             src={URL.createObjectURL(file)}
                             alt={file.name}
                             className="w-full h-full object-cover"
@@ -218,8 +254,8 @@ export default function HomePage() {
                             <Music size={24} className="text-blue-600" />
                           </div>
                         )}
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           onClick={() => discardRecording(index)}
                           className="absolute top-0 right-0 p-0.5 bg-black/50 hover:bg-black/70 rounded-bl-md opacity-0 group-hover:opacity-100 transition-opacity"
                           aria-label="Remove attachment"
@@ -251,37 +287,35 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={triggerFileUpload}
-                  className={`w-10 h-10 flex items-center justify-center rounded-full transition ${
-                    hasReachedAttachmentLimit 
-                      ? 'bg-gray-100 cursor-not-allowed' 
-                      : 'hover:bg-gray-100'
-                  }`}
+                  className={`w-10 h-10 flex items-center justify-center rounded-full transition ${hasReachedAttachmentLimit
+                    ? 'bg-gray-100 cursor-not-allowed'
+                    : 'hover:bg-gray-100'
+                    }`}
                   disabled={isLoading || isRecording || hasReachedAttachmentLimit}
-                  title={hasReachedAttachmentLimit 
-                    ? `Maximum ${MAX_ATTACHMENTS} files allowed` 
+                  title={hasReachedAttachmentLimit
+                    ? `Maximum ${MAX_ATTACHMENTS} files allowed`
                     : "Upload image"}
                 >
-                  <ImageIcon 
-                    size={20} 
-                    className={hasReachedAttachmentLimit ? "text-gray-400" : "text-gray-500"} 
+                  <ImageIcon
+                    size={20}
+                    className={hasReachedAttachmentLimit ? "text-gray-400" : "text-gray-500"}
                   />
                 </button>
                 <button
                   type="button"
                   onClick={toggleRecording}
-                  className={`relative w-10 h-10 flex items-center justify-center rounded-full transition ${
-                    isRecording 
-                      ? 'bg-red-500 hover:bg-red-600 text-white' 
-                      : hasReachedAttachmentLimit
-                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        : 'hover:bg-gray-100 text-gray-500'
-                  }`}
+                  className={`relative w-10 h-10 flex items-center justify-center rounded-full transition ${isRecording
+                    ? 'bg-red-500 hover:bg-red-600 text-white'
+                    : hasReachedAttachmentLimit
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'hover:bg-gray-100 text-gray-500'
+                    }`}
                   disabled={isLoading || hasReachedAttachmentLimit}
                   title={
                     hasReachedAttachmentLimit
                       ? `Maximum ${MAX_ATTACHMENTS} files allowed`
-                      : isRecording 
-                        ? "Stop recording" 
+                      : isRecording
+                        ? "Stop recording"
                         : "Record audio"
                   }
                 >
@@ -300,29 +334,27 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={() => setIsDeepSearchEnabled(!isDeepSearchEnabled)}
-                  className={`px-4 py-1 rounded-full text-sm font-medium transition ${
-                    isDeepSearchEnabled
-                      ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className={`px-4 py-1 rounded-full text-sm font-medium transition ${isDeepSearchEnabled
+                    ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
                 >
                   DeepSearch
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsThinkEnabled(!isThinkEnabled)}
-                  className={`px-4 py-1 rounded-full text-sm font-medium transition ${
-                    isThinkEnabled
-                      ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className={`px-4 py-1 rounded-full text-sm font-medium transition ${isThinkEnabled
+                    ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
                 >
                   Think
                 </button>
               </div>
               <div className="flex flex-row items-center gap-2">
-                <Select 
-                  value={selectedModel} 
+                <Select
+                  value={selectedModel}
                   onValueChange={(value) => setSelectedModel(value as ModelId)}
                 >
                   <SelectTrigger className="min-w-[100px] px-2 rounded-full bg-white border-none shadow-none focus:ring-0 focus:border-none">
@@ -346,7 +378,7 @@ export default function HomePage() {
                     <div className="h-5 w-5 border-2 border-t-transparent border-white rounded-full animate-spin" />
                   ) : (
                     <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
-                      <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   )}
                 </button>
