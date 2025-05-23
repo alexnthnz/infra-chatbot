@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, History } from 'lucide-react';
+import { SettingsDialog } from '@/components/settings';
 
 export default function DefaultLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -21,7 +22,8 @@ export default function DefaultLayout({ children }: { children: React.ReactNode 
             <h1 className="text-xl font-semibold">DeepFlow</h1>
           </div>
           <div className="flex items-center gap-2">
-            {isChatSessionRoute || isHomeRoute && (
+            <SettingsDialog />
+            {(isChatSessionRoute || isHomeRoute) && (
               <Button
                 variant="outline"
                 size="sm"
