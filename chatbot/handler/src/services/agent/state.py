@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TypedDict, Annotated, Sequence
+from typing import TypedDict, Annotated, Sequence, Optional
 
 from langchain_core.messages import AnyMessage
 from langgraph.graph import add_messages
@@ -24,3 +24,4 @@ class State(InputState):
     """
 
     is_last_step: IsLastStep
+    title: Optional[str]

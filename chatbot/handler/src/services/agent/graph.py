@@ -1,7 +1,7 @@
 import logging
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Sequence
 
-from langchain_core.messages import ToolMessage, HumanMessage, SystemMessage, AIMessage
+from langchain_core.messages import ToolMessage, HumanMessage, SystemMessage, AIMessage, AnyMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_postgres import PostgresChatMessageHistory
 from langgraph.graph import StateGraph, END
@@ -43,7 +43,10 @@ class Graph:
 
     def __call_model(self, state: State, config: RunnableConfig):
         response = self.model.invoke(state["messages"], config)
-        return {"messages": [response]}
+        title = state.get("title", None)
+        if not title or len(state["messages"]) > 1:
+            title = self.__generate_title(state["messages"])
+        return {"messages": [response], "title": title, "is_last_step": state["is_last_step"]}
 
     @staticmethod
     def __call_tools(state: State):
@@ -83,7 +86,7 @@ class Graph:
                         tool_call_id=tool_call["id"],
                     )
                 )
-        return {"messages": outputs}
+        return {"messages": outputs, "is_last_step": state["is_last_step"], "title": state.get("title", None)}
 
     @staticmethod
     def __should_continue(state: State):
@@ -92,9 +95,40 @@ class Graph:
             return "end"
         return "continue"
 
+    def __generate_title(self, messages: Sequence[AnyMessage]) -> str:
+        """
+        Generate a concise title for the conversation based on the message history.
+        """
+        if not messages:
+            return "New Conversation"
+
+        # Extract content from messages, limiting to the last 10 for context
+        context = ""
+        for msg in messages[-10:]:
+            if isinstance(msg, (HumanMessage, AIMessage)):
+                context += f"{msg.content}\n"
+            elif isinstance(msg, ToolMessage):
+                context += f"Tool response: {msg.content}\n"
+
+        # Prompt the LLM to generate a title
+        prompt = (
+            "Based on the following conversation context, generate a concise title (5-10 words) that summarizes the main topic or intent:\n\n"
+            f"{context}\n\nTitle:"
+        )
+        try:
+            response = self.model.invoke([SystemMessage(content=prompt)])
+            title = response.content.strip()
+            # Ensure title is concise and clean
+            if len(title) > 50:
+                title = title[:47] + "..."
+            return title if title else "Untitled Conversation"
+        except Exception as e:
+            logger.error(f"Error generating title: {e}")
+            return "Untitled Conversation"
+
     async def get_message(
         self, question: str, attachments: Optional[List[dict]] = None
-    ) -> Tuple[str, List[str], List[str]]:
+    ) -> Tuple[str, List[str], List[str], str]:
         """
         Invoke the graph to process a question and return all new messages in a structured format.
 
@@ -103,7 +137,11 @@ class Graph:
             attachments (Optional[List[dict]]): Optional attachments related to the question.
 
         Returns:
-            str: A structured string containing all new messages generated during processing.
+            Tuple[str, List[str], List[str], str]: A tuple containing:
+                - A structured string of all new messages.
+                - List of message IDs.
+                - List of tool call IDs.
+                - The conversation title.
         """
         history_messages = self.conversation_history.get_messages()
 
@@ -182,10 +220,14 @@ class Graph:
                 if message not in old_context_messages
             ]
 
+            title = result.get("title", "Untitled Conversation")
+
             self.conversation_history.add_messages(filtered_messages)
 
-            return format_response_message(filtered_messages)
+            message, resources, images = format_response_message(filtered_messages)
+
+            return message, resources, images, title
 
         except Exception as e:
             logger.error(f"Error processing message: {e}")
-            return f"Error: Failed to process message: {str(e)}", [], []
+            return f"Error: Failed to process message: {str(e)}", [], [], "Error Conversation"
